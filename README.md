@@ -22,10 +22,10 @@ git clone <your-repo-url>
 cd fueltrackr
 
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm dev
 ```
 
 Visit `http://localhost:8080` to see your app!
@@ -90,11 +90,12 @@ FuelTrackr is a fully featured PWA that can be installed on any device:
 ### Available Scripts
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm run lint         # Run ESLint
-npm run type-check   # Run TypeScript compiler
+pnpm dev             # Start development server
+pnpm build           # Build for production
+pnpm preview         # Preview production build
+pnpm lint            # Run ESLint
+pnpm storybook       # Start Storybook
+pnpm build-storybook # Build Storybook
 ```
 
 ### Project Structure

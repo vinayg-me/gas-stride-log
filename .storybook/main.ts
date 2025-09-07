@@ -12,7 +12,7 @@ const config: StorybookConfig = {
     options: {},
   },
   docs: {
-    autodocs: 'tag',
+    defaultName: 'Docs',
   },
   typescript: {
     check: false,
@@ -21,6 +21,17 @@ const config: StorybookConfig = {
       shouldExtractLiteralValuesFromEnum: true,
       propFilter: (prop) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
     },
+  },
+  viteFinal: async (config) => {
+    // Merge custom config with the default config
+    const { mergeConfig } = await import('vite');
+    return mergeConfig(config, {
+      // Optimize for pnpm
+      optimizeDeps: {
+        include: ['@storybook/react', '@storybook/addon-essentials'],
+      },
+      // Add any custom Vite config here
+    });
   },
 };
 

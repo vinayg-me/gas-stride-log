@@ -7,13 +7,13 @@ This directory contains Storybook stories for FuelTrackr components following th
 Run Storybook in development mode:
 
 ```bash
-npm run storybook
+pnpm storybook
 ```
 
 Build Storybook for production:
 
 ```bash
-npm run build-storybook
+pnpm build-storybook
 ```
 
 ## Component Stories
