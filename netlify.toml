@@ -1,15 +1,15 @@
 # Netlify configuration file
 [build]
   # Build command
-  command = "npm run build"
+  command = "pnpm run build"
   
   # Directory with the static files
   publish = "dist"
   
   # Environment variables for build
   [build.environment]
-    NODE_VERSION = "18"
-    NPM_VERSION = "9"
+    NODE_VERSION = "20.9.0"
+    PNPM_VERSION = "9.0.0"
 
 # Headers for security and performance
 [[headers]]

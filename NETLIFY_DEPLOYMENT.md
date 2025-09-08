@@ -11,9 +11,10 @@
 ### 2. Build Settings
 Netlify should auto-detect these settings, but verify:
 
-- **Build command**: `npm run build`
+- **Build command**: `pnpm run build`
 - **Publish directory**: `dist`
-- **Node version**: 18.x
+- **Node version**: 20.9.0
+- **Package manager**: pnpm 9.0.0
 
 ### 3. Environment Variables
 In Netlify dashboard, go to Site settings → Environment variables and add:
@@ -63,7 +64,7 @@ If you prefer manual deployment:
 
 1. Build the project locally:
    ```bash
-   npm run build
+   pnpm run build
    ```
 
 2. Drag and drop the `dist` folder to Netlify dashboard
