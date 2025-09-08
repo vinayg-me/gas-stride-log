@@ -15,4 +15,18 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Optimize for production
+    minify: 'esbuild', // Use esbuild for faster builds (default)
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          ui: ['@radix-ui/react-slot', '@radix-ui/react-toast'],
+          utils: ['clsx', 'tailwind-merge'],
+        },
+      },
+    },
+  },
 }));

@@ -1,0 +1,11 @@
+# Netlify _redirects file for React Router (SPA)
+# This ensures all routes are handled by React Router
+
+# Redirect all non-file requests to index.html for client-side routing
+/*    /index.html   200
+
+# Optional: Redirect HTTP to HTTPS (uncomment if needed)
+# http://gas-stride-log.netlify.app/*    https://gas-stride-log.netlify.app/:splat    301!
+
+# Optional: Redirect www to non-www (uncomment if needed)  
+# https://www.gas-stride-log.netlify.app/*    https://gas-stride-log.netlify.app/:splat    301!
