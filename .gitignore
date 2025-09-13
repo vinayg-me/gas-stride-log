@@ -23,3 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 .history
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+supabase/logs/
+.env.local
+.env.*.local
