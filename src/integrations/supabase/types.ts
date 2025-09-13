@@ -12,9 +12,157 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
-  public: {
+  graphql_public: {
     Tables: {
       [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+  public: {
+    Tables: {
+      cars: {
+        Row: {
+          created_at: string
+          fuel_type: string
+          id: string
+          make: string
+          model: string
+          owner_id: string
+          registration: string
+          tank_capacity_l: number | null
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          created_at?: string
+          fuel_type: string
+          id?: string
+          make: string
+          model: string
+          owner_id: string
+          registration: string
+          tank_capacity_l?: number | null
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          created_at?: string
+          fuel_type?: string
+          id?: string
+          make?: string
+          model?: string
+          owner_id?: string
+          registration?: string
+          tank_capacity_l?: number | null
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cars_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fuel_logs: {
+        Row: {
+          car_id: string
+          created_at: string
+          filled_at: string
+          id: string
+          is_partial: boolean
+          liters: number
+          notes: string | null
+          odometer_km: number
+          price_per_l: number | null
+          receipt_url: string | null
+          station: string | null
+          total_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          car_id: string
+          created_at?: string
+          filled_at: string
+          id?: string
+          is_partial?: boolean
+          liters: number
+          notes?: string | null
+          odometer_km: number
+          price_per_l?: number | null
+          receipt_url?: string | null
+          station?: string | null
+          total_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          car_id?: string
+          created_at?: string
+          filled_at?: string
+          id?: string
+          is_partial?: boolean
+          liters?: number
+          notes?: string | null
+          odometer_km?: number
+          price_per_l?: number | null
+          receipt_url?: string | null
+          station?: string | null
+          total_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuel_logs_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -149,6 +297,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

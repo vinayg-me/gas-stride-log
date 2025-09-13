@@ -1,10 +1,18 @@
 // Navbar Component - CRED-inspired navigation
 
 import { motion } from "framer-motion";
-import { Fuel, Menu, Bell, Settings, User } from "lucide-react";
+import { Fuel, Menu, Bell, Settings, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAppStore } from "@/store";
+import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 
 interface NavbarProps {
@@ -13,6 +21,11 @@ interface NavbarProps {
 
 export function Navbar({ className }: NavbarProps) {
   const { syncStatus, isOnline } = useAppStore();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   const getSyncStatusColor = () => {
     switch (syncStatus) {
@@ -93,13 +106,35 @@ export function Navbar({ className }: NavbarProps) {
             <Settings className="w-4 h-4" />
           </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hover:bg-primary/10"
-          >
-            <User className="w-4 h-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-primary/10"
+              >
+                <User className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="flex flex-col space-y-1 p-2">
+                <p className="text-sm font-medium leading-none">{user?.email}</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {user?.user_metadata?.full_name || 'User'}
+                </p>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sign out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Button
             variant="ghost"
