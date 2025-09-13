@@ -22,6 +22,7 @@ type AuthFormData = z.infer<typeof authSchema>;
 export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const { signIn, signUp, signInWithGoogle, signInWithGitHub } = useAuth();
 
   const form = useForm<AuthFormData>({
@@ -35,6 +36,7 @@ export function AuthForm() {
   const onSubmit = async (data: AuthFormData, mode: 'signin' | 'signup') => {
     setIsLoading(true);
     setError(null);
+    setSuccess(null);
 
     try {
       const { error } = mode === 'signin' 
@@ -43,6 +45,16 @@ export function AuthForm() {
 
       if (error) {
         setError(error.message);
+      } else {
+        // Success - show message and let auth context handle redirect
+        if (mode === 'signup') {
+          setSuccess('Account created successfully! Please check your email to verify your account.');
+        } else {
+          setSuccess('Signed in successfully! Redirecting to dashboard...');
+        }
+        
+        // Reset form on success
+        form.reset();
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -54,6 +66,7 @@ export function AuthForm() {
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     setIsLoading(true);
     setError(null);
+    setSuccess(null);
 
     try {
       const { error } = provider === 'google' 
@@ -62,6 +75,8 @@ export function AuthForm() {
 
       if (error) {
         setError(error.message);
+      } else {
+        setSuccess(`Redirecting to ${provider} for authentication...`);
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -171,6 +186,12 @@ export function AuthForm() {
           {error && (
             <Alert className="mt-4 bg-red-500/20 border-red-500/50" variant="destructive">
               <AlertDescription className="text-red-200">{error}</AlertDescription>
+            </Alert>
+          )}
+          
+          {success && (
+            <Alert className="mt-4 bg-green-500/20 border-green-500/50">
+              <AlertDescription className="text-green-200">{success}</AlertDescription>
             </Alert>
           )}
           
