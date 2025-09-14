@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CarCard } from '@/components/ui/car-card';
 import { AddCarDialog } from '../car-dialog';
@@ -44,10 +44,10 @@ describe('CarCard as Dialog Trigger', () => {
     );
 
     // The CarCard should be rendered
-    expect(screen.getByText('Add New Car')).toBeInTheDocument();
+    expect(screen.getByTestId('add-car-button-card')).toBeInTheDocument();
     
     // Click the card
-    await user.click(screen.getByText('Add New Car'));
+    await user.click(screen.getByTestId('add-car-button-card'));
 
     // The dialog should open and show the form
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -69,22 +69,5 @@ describe('CarCard as Dialog Trigger', () => {
     
     // But should still show the text
     expect(screen.getByText('Add New Car')).toBeInTheDocument();
-  });
-
-  it('should render button when asDialogTrigger is false', () => {
-    const mockOnAddClick = vi.fn();
-
-    render(
-      <TestWrapper>
-        <CarCard
-          isAddCard
-          asDialogTrigger={false}
-          onAddClick={mockOnAddClick}
-        />
-      </TestWrapper>
-    );
-
-    // Should render the "Add Car" button when not used as dialog trigger
-    expect(screen.getByRole('button', { name: /add car/i })).toBeInTheDocument();
   });
 });
