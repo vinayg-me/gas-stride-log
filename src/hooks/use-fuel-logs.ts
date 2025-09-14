@@ -29,11 +29,13 @@ export function useFuelLog(id: string) {
   });
 }
 
-export function useCarMileage(carId: string) {
+export function useCarMileage(carId?: string) {
   return useQuery({
-    queryKey: FUEL_LOG_QUERY_KEYS.mileage(carId),
-    queryFn: () => FuelLogService.calculateMileageForCar(carId),
-    enabled: !!carId,
+    queryKey: carId
+      ? FUEL_LOG_QUERY_KEYS.mileage(carId)
+      : ([...FUEL_LOG_QUERY_KEYS.all, 'mileage', 'all-cars'] as const),
+    queryFn: () => (carId ? FuelLogService.calculateMileageForCar(carId) : FuelLogService.calculateMileageForAllCars()),
+    enabled: true,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }

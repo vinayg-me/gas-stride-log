@@ -29,6 +29,12 @@ export interface FuelLog {
   updated_at: string;
 }
 
+// Enriched fuel log used for UI/analytics where computed values are attached
+export type FuelLogWithMetrics = FuelLog & {
+  mileage?: number;
+  distance?: number;
+};
+
 export interface CarStats {
   car_id: string;
   avg_kmpl: number;

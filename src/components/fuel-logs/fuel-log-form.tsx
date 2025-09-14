@@ -94,11 +94,10 @@ export function FuelLogForm({
   // Auto-calculate missing price or total cost
   useEffect(() => {
     const [liters, pricePerL, totalCost] = watchedValues;
-
-    if (liters && pricePerL && !totalCost) {
+    if (liters && pricePerL) {
       form.setValue('total_cost', Number((liters * pricePerL).toFixed(2)), { shouldDirty: true });
-    } else if (liters && totalCost && !pricePerL) {
-      form.setValue('price_per_l', Number((totalCost / liters).toFixed(2)), { shouldDirty: true });
+    } else if (liters && totalCost) {
+      form.setValue('price_per_l', Number((totalCost / liters)), { shouldDirty: true });
     }
   }, [watchedValues, form]);
 
@@ -361,8 +360,7 @@ export function FuelLogForm({
                         step="0.01"
                         placeholder="3742.50"
                         {...field}
-                        disabled={isLoading}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        disabled
                       />
                     </FormControl>
                     <FormDescription>

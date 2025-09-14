@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { FuelLog, AddFuelLogForm } from '@/types';
+import { FuelLog, AddFuelLogForm, FuelLogWithMetrics } from '@/types';
 import { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
 type FuelLogRow = Tables<'fuel_logs'>;
@@ -50,8 +50,16 @@ export class FuelLogService {
     const processedData = this.processLogData(logData);
 
     const logInsert: FuelLogInsert = {
-      ...processedData,
+      car_id: logData.car_id,
       filled_at: logData.filled_at,
+      odometer_km: logData.odometer_km,
+      liters: logData.liters,
+      is_partial: logData.is_partial,
+      price_per_l: processedData.price_per_l ?? null,
+      total_cost: processedData.total_cost ?? null,
+      station: logData.station ?? null,
+      notes: logData.notes ?? null,
+      receipt_url: logData.receipt_url ?? null,
     };
 
     const { data, error } = await supabase
@@ -157,24 +165,53 @@ export class FuelLogService {
   }
 
   // Mileage calculation methods
-  static async calculateMileageForCar(carId: string): Promise<{
-    logs: Array<FuelLog & { mileage?: number; distance?: number }>;
-    averageMileage: number;
-  }> {
+  static async calculateMileageForCar(carId: string): Promise<{ logs: FuelLogWithMetrics[]; averageMileage: number }> {
     const logs = await this.getFuelLogs(carId);
-    
-    // Sort by filled_at ascending for calculation
-    const sortedLogs = [...logs].sort((a, b) => 
+    return this.computeMileageForLogs(logs);
+  }
+
+  static async calculateMileageForAllCars(): Promise<{ logs: FuelLogWithMetrics[]; averageMileage: number }> {
+    const allLogs = await this.getFuelLogs();
+
+    // Group by car_id
+    const carIdToLogs = new Map<string, FuelLog[]>();
+    for (const log of allLogs) {
+      const bucket = carIdToLogs.get(log.car_id) || [];
+      bucket.push(log);
+      carIdToLogs.set(log.car_id, bucket);
+    }
+
+    const processedPerCar: Array<{ logs: FuelLogWithMetrics[]; averageMileage: number }> = [];
+    for (const [, logs] of carIdToLogs) {
+      processedPerCar.push(this.computeMileageForLogs(logs));
+    }
+
+    const flattenedLogs = processedPerCar.flatMap(x => x.logs).sort((a, b) =>
+      new Date(b.filled_at).getTime() - new Date(a.filled_at).getTime()
+    );
+
+    const totalMileage = processedPerCar.reduce((s, x) => s + x.averageMileage * (x.logs.filter(l => l.mileage != null).length > 0 ? 1 : 0), 0);
+    const mileageEntries = processedPerCar.reduce((s, x) => s + x.logs.filter(l => l.mileage != null).length, 0);
+    const averageMileage = mileageEntries > 0
+      ? flattenedLogs.filter(l => l.mileage != null).reduce((s, l) => s + (l.mileage as number), 0) / mileageEntries
+      : 0;
+
+    return { logs: flattenedLogs, averageMileage };
+  }
+
+  private static computeMileageForLogs(logs: FuelLog[]): { logs: FuelLogWithMetrics[]; averageMileage: number } {
+    // Sort by filled_at ascending for calculation per car
+    const sortedLogs = [...logs].sort((a, b) =>
       new Date(a.filled_at).getTime() - new Date(b.filled_at).getTime()
     );
 
-    const logsWithMileage: Array<FuelLog & { mileage?: number; distance?: number }> = [];
+    const logsWithMileage: FuelLogWithMetrics[] = [];
     let totalMileage = 0;
     let mileageCount = 0;
 
     for (let i = 0; i < sortedLogs.length; i++) {
       const currentLog = sortedLogs[i];
-      const logWithMileage = { ...currentLog };
+      const logWithMileage: FuelLogWithMetrics = { ...currentLog };
 
       if (!currentLog.is_partial && i > 0) {
         // Find the previous full fill
@@ -212,10 +249,7 @@ export class FuelLogService {
 
     const averageMileage = mileageCount > 0 ? totalMileage / mileageCount : 0;
 
-    return {
-      logs: logsWithMileage,
-      averageMileage,
-    };
+    return { logs: logsWithMileage, averageMileage };
   }
 
   static async getCarStatistics(carId: string): Promise<{

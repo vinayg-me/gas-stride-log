@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { FuelLog, Car } from '@/types';
+import { FuelLog, FuelLogWithMetrics, Car } from '@/types';
 import { EditFuelLogDialog } from './fuel-log-dialog';
 import { DeleteFuelLogDialog } from './delete-fuel-log-dialog';
 import { useFuelLogs, useCarMileage } from '@/hooks/use-fuel-logs';
@@ -20,7 +20,7 @@ interface FuelLogListProps {
 
 export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
   const { data: fuelLogs = [], isLoading, error } = useFuelLogs(carId);
-  const { data: mileageData } = useCarMileage(carId || '');
+  const { data: mileageData } = useCarMileage(carId);
 
   if (error) {
     return (
@@ -56,8 +56,7 @@ export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
     );
   }
 
-  const logsWithMileage = mileageData?.logs || fuelLogs.map(log => ({ ...log }));
-
+  const logsWithMileage: FuelLogWithMetrics[] = mileageData?.logs || fuelLogs.map((log: FuelLog) => ({ ...log }));
   return (
     <div className={cn("space-y-4", className)}>
       {logsWithMileage.map((log, index) => {
