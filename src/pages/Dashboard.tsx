@@ -16,6 +16,9 @@ import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AddCarDialog } from "@/components/cars/car-dialog";
+import { AddFuelLogDialog } from "@/components/fuel-logs/fuel-log-dialog";
+import { FuelLogList } from "@/components/fuel-logs/fuel-log-list";
+import { useOverallStatistics } from "@/hooks/use-fuel-logs";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { useCars } from "@/hooks/use-cars";
 import heroImage from "@/assets/hero-fuel-tracking.jpg";
@@ -34,6 +37,7 @@ const mockOverallStats = {
 
 export default function Dashboard() {
   const { data: cars = [], isLoading, error } = useCars();
+  const { data: overall } = useOverallStatistics(cars.map(c => c.id));
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -103,13 +107,18 @@ export default function Dashboard() {
               optimize your driving with beautiful analytics.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button
-                size="lg"
-                className="bg-gradient-primary hover:opacity-90 glow-primary"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Add Fuel Log
-              </Button>
+              <AddFuelLogDialog
+                cars={cars}
+                trigger={
+                  <Button
+                    size="lg"
+                    className="bg-gradient-primary hover:opacity-90 glow-primary"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Add Fuel Log
+                  </Button>
+                }
+              />
               <Button
                 variant="outline"
                 size="lg"
@@ -148,20 +157,20 @@ export default function Dashboard() {
             />
             <StatCard
               title="Average Mileage"
-              value="—"
+              value={overall ? `${overall.averageMileage.toFixed(1)}` : '—'}
               subtitle="Across all vehicles"
               icon={Fuel}
-              trend={{ value: 0, isPositive: true }}
+              trend={overall ? { value: 0, isPositive: true } : undefined}
             />
             <StatCard
               title="Cost per KM"
-              value="—"
+              value={overall ? `₹${overall.costPerKm.toFixed(2)}` : '—'}
               subtitle="Running cost"
               icon={DollarSign}
             />
             <StatCard
               title="Monthly Spend"
-              value="—"
+              value={overall ? `₹${overall.last30DaysSpend.toFixed(0)}` : '—'}
               subtitle="This month"
               icon={Calendar}
               variant="glass"
@@ -220,6 +229,16 @@ export default function Dashboard() {
               >
                 <CarCard isAddCard />
               </motion.div>
+            </div>
+          )}
+          {/* Recent fuel logs for first car */}
+          {cars.length > 0 && (
+            <div className="mt-12">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-foreground">Recent Fuel Logs</h3>
+                <AddFuelLogDialog cars={cars} />
+              </div>
+              <FuelLogList cars={cars} />
             </div>
           )}
         </motion.section>

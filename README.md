@@ -96,6 +96,7 @@ pnpm preview         # Preview production build
 pnpm lint            # Run ESLint
 pnpm storybook       # Start Storybook
 pnpm build-storybook # Build Storybook
+pnpm db:test         # Verify Supabase connection
 ```
 
 ### Project Structure
@@ -163,6 +164,21 @@ FuelTrackr is designed to integrate with **Supabase** for backend functionality:
 3. Run the provided SQL migrations
 4. Enable Row Level Security (RLS)
 5. Configure authentication providers
+
+### Environment
+
+Create a `.env` file at the project root with:
+
+```
+VITE_SUPABASE_URL=<your-supabase-url>
+VITE_SUPABASE_ANON_KEY=<your-anon-key>
+```
+
+Then test the connection:
+
+```
+npm run db:test
+```
 
 ### Database Schema:
 - `users` - User profiles and settings

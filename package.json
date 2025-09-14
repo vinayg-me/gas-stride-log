@@ -18,7 +18,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "db:test": "node ./test-db-connection.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -98,6 +99,7 @@
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react-swc": "^3.11.0",
+    "dotenv": "^17.2.2",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
