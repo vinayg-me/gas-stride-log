@@ -1,84 +1,39 @@
 // Dashboard Page - Main homepage with CRED-inspired design
 
 import { motion } from "framer-motion";
-import { Plus, Fuel, TrendingUp, DollarSign, Route, Calendar } from "lucide-react";
+import {
+  Plus,
+  Fuel,
+  TrendingUp,
+  DollarSign,
+  Route,
+  Calendar,
+  Car,
+} from "lucide-react";
 import { StatCard } from "@/components/ui/stat-card";
 import { CarCard } from "@/components/ui/car-card";
 import { Button } from "@/components/ui/button";
-import { useAppStore } from "@/store";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AddCarDialog } from "@/components/cars/car-dialog";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
+import { useCars } from "@/hooks/use-cars";
 import heroImage from "@/assets/hero-fuel-tracking.jpg";
 
+// Keep mock data as fallback for overall stats (will be implemented in Phase 4)
 const mockOverallStats = {
-  total_cars: 2,
-  avg_kmpl: 18.5,
-  cost_per_km: 6.2,
-  total_spend: 25000,
-  total_liters: 890,
-  total_distance: 16450,
-  monthly_spend: 4200,
+  total_cars: 0,
+  avg_kmpl: 0,
+  cost_per_km: 0,
+  total_spend: 0,
+  total_liters: 0,
+  total_distance: 0,
+  monthly_spend: 0,
   last_updated: new Date().toISOString(),
 };
 
-const mockCars = [
-  {
-    id: "1",
-    owner_id: "user1",
-    registration: "KA-01-AB-1234",
-    make: "Honda",
-    model: "City",
-    fuel_type: "petrol" as const,
-    tank_capacity_l: 40,
-    year: 2022,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    owner_id: "user1",
-    registration: "KA-05-CD-5678",
-    make: "Maruti",
-    model: "Swift",
-    fuel_type: "petrol" as const,
-    tank_capacity_l: 37,
-    year: 2021,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
-const mockCarStats = {
-  "1": {
-    car_id: "1",
-    avg_kmpl: 19.2,
-    cost_per_km: 5.8,
-    total_spend: 15000,
-    total_liters: 520,
-    total_distance: 10000,
-    last_fill_date: "2024-01-15",
-    last_30_days_spend: 2500,
-    fuel_logs_count: 25,
-  },
-  "2": {
-    car_id: "2",
-    avg_kmpl: 17.8,
-    cost_per_km: 6.6,
-    total_spend: 10000,
-    total_liters: 370,
-    total_distance: 6450,
-    last_fill_date: "2024-01-12",
-    last_30_days_spend: 1700,
-    fuel_logs_count: 18,
-  },
-};
-
 export default function Dashboard() {
-  const { cars, overallStats, carStats } = useAppStore();
-
-  // Use mock data for now
-  const displayStats = overallStats || mockOverallStats;
-  const displayCars = cars.length > 0 ? cars : mockCars;
-  const displayCarStats = Object.keys(carStats).length > 0 ? carStats : mockCarStats;
+  const { data: cars = [], isLoading, error } = useCars();
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -90,6 +45,28 @@ export default function Dashboard() {
     },
   };
 
+  const handleViewDetails = (carId: string) => {
+    // TODO: Navigate to car details page
+    console.log("View details for:", carId);
+  };
+
+  const handleAddFuelLog = (carId: string) => {
+    // TODO: Open fuel log dialog
+    console.log("Add fuel log for:", carId);
+  };
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
+        <Alert className="max-w-md" variant="destructive">
+          <AlertDescription>
+            Failed to load your cars. Please try refreshing the page.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-hero">
       {/* Hero Section */}
@@ -100,14 +77,14 @@ export default function Dashboard() {
         className="relative overflow-hidden"
       >
         <div className="absolute inset-0 z-0">
-          <img 
-            src={heroImage} 
-            alt="Fuel tracking dashboard" 
+          <img
+            src={heroImage}
+            alt="Fuel tracking dashboard"
             className="w-full h-full object-cover opacity-30"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
         </div>
-        
+
         <div className="relative z-10 container py-16 px-4">
           <motion.div
             initial={{ y: 30, opacity: 0 }}
@@ -122,14 +99,22 @@ export default function Dashboard() {
               </span>
             </h1>
             <p className="text-lg text-muted-foreground mb-8">
-              Monitor your vehicle's fuel efficiency, track expenses, and optimize your driving with beautiful analytics.
+              Monitor your vehicle's fuel efficiency, track expenses, and
+              optimize your driving with beautiful analytics.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-gradient-primary hover:opacity-90 glow-primary">
+              <Button
+                size="lg"
+                className="bg-gradient-primary hover:opacity-90 glow-primary"
+              >
                 <Plus className="w-5 h-5 mr-2" />
                 Add Fuel Log
               </Button>
-              <Button variant="outline" size="lg" className="hover:bg-primary/10">
+              <Button
+                variant="outline"
+                size="lg"
+                className="hover:bg-primary/10"
+              >
                 View Analytics
               </Button>
             </div>
@@ -145,39 +130,38 @@ export default function Dashboard() {
           variants={containerVariants}
           className="mb-12"
         >
-          <motion.h2 
+          <motion.h2
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             className="text-2xl font-bold text-foreground mb-6"
           >
             Overall Performance
           </motion.h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
+              title="Total Cars"
+              value={cars.length.toString()}
+              subtitle="In your garage"
+              icon={Car}
+              variant="premium"
+            />
+            <StatCard
               title="Average Mileage"
-              value={`${displayStats.avg_kmpl.toFixed(1)} km/L`}
+              value="—"
               subtitle="Across all vehicles"
               icon={Fuel}
-              variant="premium"
-              trend={{ value: 5.2, isPositive: true }}
+              trend={{ value: 0, isPositive: true }}
             />
             <StatCard
               title="Cost per KM"
-              value={`₹${displayStats.cost_per_km.toFixed(2)}`}
+              value="—"
               subtitle="Running cost"
               icon={DollarSign}
-              trend={{ value: 2.1, isPositive: false }}
-            />
-            <StatCard
-              title="Total Distance"
-              value={`${(displayStats.total_distance / 1000).toFixed(1)}K km`}
-              subtitle="Lifetime distance"
-              icon={Route}
             />
             <StatCard
               title="Monthly Spend"
-              value={`₹${displayStats.monthly_spend.toLocaleString()}`}
+              value="—"
               subtitle="This month"
               icon={Calendar}
               variant="glass"
@@ -197,40 +181,47 @@ export default function Dashboard() {
             className="flex items-center justify-between mb-6"
           >
             <h2 className="text-2xl font-bold text-foreground">My Garage</h2>
-            <Button variant="outline" className="hover:bg-primary/10">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Car
-            </Button>
+            <AddCarDialog
+              trigger={
+                <Button variant="outline" className="hover:bg-primary/10">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Car
+                </Button>
+              }
+            />
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayCars.map((car, index) => (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="lg" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {cars.map((car, index) => (
+                <motion.div
+                  key={car.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <CarCard
+                    car={car}
+                    stats={undefined} // TODO: Implement car stats in Phase 4
+                    onViewDetails={handleViewDetails}
+                    onAddFuelLog={handleAddFuelLog}
+                  />
+                </motion.div>
+              ))}
+
               <motion.div
-                key={car.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: cars.length * 0.1 }}
               >
-                <CarCard
-                  car={car}
-                  stats={displayCarStats[car.id]}
-                  onViewDetails={(carId) => console.log("View details for:", carId)}
-                  onAddFuelLog={(carId) => console.log("Add fuel log for:", carId)}
-                />
+                <CarCard isAddCard />
               </motion.div>
-            ))}
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: displayCars.length * 0.1 }}
-            >
-              <CarCard
-                isAddCard
-                onAddClick={() => console.log("Add new car")}
-              />
-            </motion.div>
-          </div>
+            </div>
+          )}
         </motion.section>
       </div>
 
