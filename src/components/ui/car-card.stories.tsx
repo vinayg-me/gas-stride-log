@@ -112,3 +112,17 @@ export const NewCar: Story = {
     },
   },
 };
+
+export const AddCard: Story = {
+  args: {
+    isAddCard: true,
+    onAddClick: () => console.log('Add car clicked'),
+  },
+};
+
+export const AddCardAsDialogTrigger: Story = {
+  args: {
+    isAddCard: true,
+    asDialogTrigger: true,
+  },
+};
