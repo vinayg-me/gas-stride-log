@@ -85,6 +85,7 @@ export interface AddFuelLogForm {
   is_partial: boolean;
   station?: string;
   notes?: string;
+  receipt_url?: string;
 }
 
 // Chart data types

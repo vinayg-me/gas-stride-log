@@ -24,6 +24,8 @@ import { AddCarDialog, EditCarDialog } from "@/components/cars/car-dialog";
 import { DeleteCarDialog } from "@/components/cars/delete-car-dialog";
 import { cn } from "@/lib/utils";
 import { Car as CarType, CarStats } from "@/types";
+import { useCarStatistics } from "@/hooks/use-fuel-logs";
+import { AddFuelLogDialog } from "@/components/fuel-logs/fuel-log-dialog";
 
 interface CarCardProps {
   car?: CarType;
@@ -72,7 +74,10 @@ export const CarCard = React.forwardRef<HTMLDivElement, CarCardProps>(
               <div className="rounded-full bg-primary/10 p-4 mb-4 group-hover:bg-primary/20 transition-colors">
                 <AddCarDialog
                   trigger={
-                    <Plus className="h-8 w-8 text-primary cursor-pointer" data-testid="add-car-button-card" />
+                    <Plus
+                      className="h-8 w-8 text-primary cursor-pointer"
+                      data-testid="add-car-button-card"
+                    />
                   }
                 />
               </div>
@@ -89,6 +94,9 @@ export const CarCard = React.forwardRef<HTMLDivElement, CarCardProps>(
     }
 
     if (!car) return null;
+
+    // compute stats from live fuel logs if available
+    const { data: carStats } = useCarStatistics(car.id);
 
     return (
       <motion.div
@@ -156,7 +164,7 @@ export const CarCard = React.forwardRef<HTMLDivElement, CarCardProps>(
             </div>
 
             {/* Stats */}
-            {stats && (
+            {(stats || (carStats && carStats.logCount > 1)) && (
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1">
@@ -166,7 +174,7 @@ export const CarCard = React.forwardRef<HTMLDivElement, CarCardProps>(
                     </span>
                   </div>
                   <p className="text-lg font-bold text-foreground">
-                    {stats.avg_kmpl.toFixed(1)}
+                    {(stats?.avg_kmpl ?? carStats?.averageMileage ?? 0).toFixed(1)}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -175,7 +183,7 @@ export const CarCard = React.forwardRef<HTMLDivElement, CarCardProps>(
                     <span className="text-xs text-muted-foreground">₹/km</span>
                   </div>
                   <p className="text-lg font-bold text-foreground">
-                    {stats.cost_per_km.toFixed(2)}
+                    {(stats?.cost_per_km ?? carStats?.costPerKm ?? 0).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -203,13 +211,19 @@ export const CarCard = React.forwardRef<HTMLDivElement, CarCardProps>(
               >
                 View Details
               </Button>
-              <Button
-                size="sm"
-                onClick={() => onAddFuelLog?.(car.id)}
-                className="flex-1 bg-gradient-primary hover:opacity-90"
-              >
-                Add Fuel
-              </Button>
+              <AddFuelLogDialog
+                cars={[car]}
+                defaultCarId={car.id}
+                trigger={
+                  <Button
+                    size="sm"
+                    onClick={() => onAddFuelLog?.(car.id)}
+                    className="flex-1 bg-gradient-primary hover:opacity-90"
+                  >
+                    Add Fuel
+                  </Button>
+                }
+              />
             </div>
 
             {/* Last fill info */}
