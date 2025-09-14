@@ -72,7 +72,7 @@ export const CarCard = React.forwardRef<HTMLDivElement, CarCardProps>(
               <div className="rounded-full bg-primary/10 p-4 mb-4 group-hover:bg-primary/20 transition-colors">
                 <AddCarDialog
                   trigger={
-                    <Plus className="h-8 w-8 text-primary cursor-pointer" />
+                    <Plus className="h-8 w-8 text-primary cursor-pointer" data-testid="add-car-button-card" />
                   }
                 />
               </div>
@@ -82,15 +82,6 @@ export const CarCard = React.forwardRef<HTMLDivElement, CarCardProps>(
               <p className="text-sm text-muted-foreground text-center mt-2">
                 Start tracking fuel consumption for another vehicle
               </p>
-              {/* {!asDialogTrigger && (
-              <Button 
-                onClick={onAddClick}
-                variant="default"
-                className="w-full bg-gradient-primary hover:opacity-90 mt-4"
-              >
-                Add Car
-              </Button>
-            )} */}
             </CardContent>
           </Card>
         </motion.div>
