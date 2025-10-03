@@ -14,6 +14,7 @@ A beautiful, offline-first Progressive Web App for tracking fuel usage with CRED
 - **💾 Smart Data Sync** - Automatic background synchronization when online
 - **🔢 Full-to-Full Method** - Accurate mileage calculation using industry standards
 - Demo Arch
+- Demo 1
 
 ## 🚀 Quick Start
 
