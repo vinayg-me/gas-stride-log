@@ -9,7 +9,7 @@ A beautiful, offline-first Progressive Web App for tracking fuel usage with CRED
 - **📱 Progressive Web App** - Install on any device, works offline
 - **🎨 CRED-Inspired Design** - Elegant dark theme with glassmorphism effects
 - **⚡ Offline-First** - Full functionality without internet connection
-- **📊 Beautiful Analytics** - Charts for mileage trends, costs, and fuel efficiency
+- **📊 Beautiful Analytics** - Charts for mileage trends, costs, and fuel efficiencies
 - **🚗 Multi-Vehicle Support** - Track multiple vehicles in your garage
 - **💾 Smart Data Sync** - Automatic background synchronization when online
 - **🔢 Full-to-Full Method** - Accurate mileage calculation using industry standards
