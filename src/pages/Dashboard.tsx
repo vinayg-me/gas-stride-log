@@ -22,6 +22,7 @@ import { useOverallStatistics } from "@/hooks/use-fuel-logs";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { useCars } from "@/hooks/use-cars";
 import heroImage from "@/assets/hero-fuel-tracking.jpg";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 
 // Keep mock data as fallback for overall stats (will be implemented in Phase 4)
 const mockOverallStats = {
@@ -38,6 +39,8 @@ const mockOverallStats = {
 export default function Dashboard() {
   const { data: cars = [], isLoading, error } = useCars();
   const { data: overall } = useOverallStatistics(cars.map(c => c.id));
+  const { data: flags } = useFeatureFlags();
+  const showAnalytics = flags?.isEnabled('analytics_enabled') === true;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -119,13 +122,15 @@ export default function Dashboard() {
                   </Button>
                 }
               />
-              <Button
-                variant="outline"
-                size="lg"
-                className="hover:bg-primary/10"
-              >
-                View Analytics
-              </Button>
+              {showAnalytics && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="hover:bg-primary/10"
+                >
+                  View Analytics
+                </Button>
+              )}
             </div>
           </motion.div>
         </div>
