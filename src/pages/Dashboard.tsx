@@ -122,6 +122,19 @@ export default function Dashboard() {
                   </Button>
                 }
               />
+              <AddCarDialog
+                trigger={
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="hover:bg-primary/10"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Add Car
+                  </Button>
+                }
+              />
+              
               {showAnalytics && (
                 <Button
                   variant="outline"
