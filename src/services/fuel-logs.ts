@@ -151,6 +151,31 @@ export class FuelLogService {
     }
   }
 
+  static async getSignedReceiptUrl(receiptUrl: string, expiresInSeconds = 3600): Promise<string> {
+    try {
+      const url = new URL(receiptUrl);
+      const pathname = url.pathname;
+      const splitMarker = '/receipts/';
+      const markerIndex = pathname.indexOf(splitMarker);
+      if (markerIndex === -1) {
+        return receiptUrl;
+      }
+      const filePath = pathname.substring(markerIndex + splitMarker.length);
+
+      const { data, error } = await supabase.storage
+        .from('receipts')
+        .createSignedUrl(filePath, expiresInSeconds);
+
+      if (error || !data?.signedUrl) {
+        return receiptUrl;
+      }
+
+      return data.signedUrl;
+    } catch (err) {
+      return receiptUrl;
+    }
+  }
+
   private static processLogData(data: Partial<AddFuelLogForm>): Partial<FuelLogInsert> {
     const processed = { ...data };
 
