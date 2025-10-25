@@ -86,6 +86,9 @@ export function useCreateFuelLog() {
       queryClient.invalidateQueries({ queryKey: FUEL_LOG_QUERY_KEYS.lists() });
       queryClient.invalidateQueries({ queryKey: FUEL_LOG_QUERY_KEYS.mileage(newLog.car_id) });
       queryClient.invalidateQueries({ queryKey: FUEL_LOG_QUERY_KEYS.statistics(newLog.car_id) });
+      // Also invalidate the all-cars mileage and overall aggregates used on Dashboard
+      queryClient.invalidateQueries({ queryKey: [...FUEL_LOG_QUERY_KEYS.all, 'mileage', 'all-cars'] });
+      queryClient.invalidateQueries({ queryKey: [...FUEL_LOG_QUERY_KEYS.all, 'overall'] });
 
       toast({
         title: "Fuel Log Added Successfully",
@@ -125,6 +128,9 @@ export function useUpdateFuelLog() {
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: FUEL_LOG_QUERY_KEYS.mileage(updatedLog.car_id) });
       queryClient.invalidateQueries({ queryKey: FUEL_LOG_QUERY_KEYS.statistics(updatedLog.car_id) });
+      // Also invalidate the all-cars mileage and overall aggregates used on Dashboard
+      queryClient.invalidateQueries({ queryKey: [...FUEL_LOG_QUERY_KEYS.all, 'mileage', 'all-cars'] });
+      queryClient.invalidateQueries({ queryKey: [...FUEL_LOG_QUERY_KEYS.all, 'overall'] });
 
       toast({
         title: "Fuel Log Updated Successfully",
@@ -166,6 +172,9 @@ export function useDeleteFuelLog() {
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: FUEL_LOG_QUERY_KEYS.mileage(deletedLog.car_id) });
       queryClient.invalidateQueries({ queryKey: FUEL_LOG_QUERY_KEYS.statistics(deletedLog.car_id) });
+      // Also invalidate the all-cars mileage and overall aggregates used on Dashboard
+      queryClient.invalidateQueries({ queryKey: [...FUEL_LOG_QUERY_KEYS.all, 'mileage', 'all-cars'] });
+      queryClient.invalidateQueries({ queryKey: [...FUEL_LOG_QUERY_KEYS.all, 'overall'] });
 
       toast({
         title: "Fuel Log Deleted Successfully",
