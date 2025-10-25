@@ -11,6 +11,7 @@ import { EditFuelLogDialog } from './fuel-log-dialog';
 import { DeleteFuelLogDialog } from './delete-fuel-log-dialog';
 import { useFuelLogs, useCarMileage } from '@/hooks/use-fuel-logs';
 import { cn } from '@/lib/utils';
+import { FuelLogService } from '@/services/fuel-logs';
 
 interface FuelLogListProps {
   carId?: string;
@@ -21,6 +22,11 @@ interface FuelLogListProps {
 export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
   const { data: fuelLogs = [], isLoading, error } = useFuelLogs(carId);
   const { data: mileageData } = useCarMileage(carId);
+
+  const handleOpenReceipt = async (receiptUrl: string) => {
+    const urlToOpen = await FuelLogService.getSignedReceiptUrl(receiptUrl);
+    window.open(urlToOpen, '_blank');
+  };
 
   if (error) {
     return (
@@ -57,6 +63,7 @@ export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
   }
 
   const logsWithMileage: FuelLogWithMetrics[] = mileageData?.logs || fuelLogs.map((log: FuelLog) => ({ ...log }));
+  
   return (
     <div className={cn("space-y-4", className)}>
       {logsWithMileage.map((log, index) => {
@@ -197,7 +204,7 @@ export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
                           variant="link"
                           size="sm"
                           className="p-0 h-auto text-sm"
-                          onClick={() => window.open(log.receipt_url, '_blank')}
+                          onClick={() => handleOpenReceipt(log.receipt_url as string)}
                         >
                           View Receipt
                         </Button>
