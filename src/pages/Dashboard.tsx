@@ -261,13 +261,6 @@ export default function Dashboard() {
           )}
         </motion.section>
       </div>
-
-      {/* Floating Action Button */}
-      <FloatingActionButton
-        icon={Plus}
-        onClick={() => console.log("Add fuel log")}
-        label="Add Fuel Log"
-      />
     </div>
   );
 }
