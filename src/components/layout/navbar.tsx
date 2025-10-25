@@ -14,6 +14,8 @@ import {
 import { useAppStore } from "@/store";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { useMemo } from "react";
 
 interface NavbarProps {
   className?: string;
@@ -22,7 +24,9 @@ interface NavbarProps {
 export function Navbar({ className }: NavbarProps) {
   const { syncStatus, isOnline } = useAppStore();
   const { user, signOut } = useAuth();
-
+  const { data: flags } = useFeatureFlags();
+  const settingsMenuEnabled = useMemo(() => flags?.isEnabled("navbar_settings_icon") ?? false, [flags]);
+  const notificationsMenuEnabled = useMemo(() => flags?.isEnabled("navbar_notifications_icon") ?? false, [flags]);
   const handleSignOut = async () => {
     await signOut();
   };
@@ -45,6 +49,8 @@ export function Navbar({ className }: NavbarProps) {
       default: return 'Unknown';
     }
   };
+
+  
 
   return (
     <motion.header
@@ -84,7 +90,7 @@ export function Navbar({ className }: NavbarProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <Button
+          {notificationsMenuEnabled && (<Button
             variant="ghost"
             size="sm"
             className="relative hover:bg-primary/10"
@@ -96,15 +102,15 @@ export function Navbar({ className }: NavbarProps) {
             >
               2
             </Badge>
-          </Button>
+          </Button>)}
           
-          <Button
+          {settingsMenuEnabled && (<Button
             variant="ghost"
             size="sm"
             className="hover:bg-primary/10"
           >
             <Settings className="w-4 h-4" />
-          </Button>
+          </Button>)}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
