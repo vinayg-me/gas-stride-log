@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { AppLayout } from "@/components/layout/app-layout";
 import Dashboard from "@/pages/Dashboard";
+import Analytics from "@/pages/Analytics";
 import AuthCallback from "@/pages/AuthCallback";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +38,7 @@ const App = () => (
                 <AppLayout>
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
+                    <Route path="/analytics" element={<Analytics />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </AppLayout>

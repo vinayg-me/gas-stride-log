@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Fuel, Menu, Bell, Settings, User, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,6 +23,7 @@ interface NavbarProps {
 }
 
 export function Navbar({ className }: NavbarProps) {
+  const navigate = useNavigate();
   const { syncStatus, isOnline } = useAppStore();
   const { user, signOut } = useAuth();
   const { data: flags } = useFeatureFlags();
@@ -50,6 +52,10 @@ export function Navbar({ className }: NavbarProps) {
     }
   };
 
+  const navigateToHome = () => {
+    navigate('/');
+  };
+
   
 
   return (
@@ -66,7 +72,8 @@ export function Navbar({ className }: NavbarProps) {
         {/* Logo */}
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="flex items-center gap-3"
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={navigateToHome}
         >
           <div className="p-2 rounded-xl bg-gradient-primary">
             <Fuel className="w-6 h-6 text-white" />

@@ -10,6 +10,7 @@ import {
   Calendar,
   Car,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { StatCard } from "@/components/ui/stat-card";
 import { CarCard } from "@/components/ui/car-card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ const mockOverallStats = {
 };
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { data: cars = [], isLoading, error } = useCars();
   const { data: overall } = useOverallStatistics(cars.map(c => c.id));
   const { data: flags } = useFeatureFlags();
@@ -140,6 +142,7 @@ export default function Dashboard() {
                   variant="outline"
                   size="lg"
                   className="hover:bg-primary/10"
+                  onClick={() => navigate('/analytics')}
                 >
                   View Analytics
                 </Button>
