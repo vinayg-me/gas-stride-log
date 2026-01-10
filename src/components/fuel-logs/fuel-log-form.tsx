@@ -91,15 +91,8 @@ export function FuelLogForm({
 
   const watchedValues = form.watch(['liters', 'price_per_l', 'total_cost', 'is_partial']);
 
-  // Auto-calculate missing price or total cost
-  useEffect(() => {
-    const [liters, pricePerL, totalCost] = watchedValues;
-    if (liters && pricePerL) {
-      form.setValue('total_cost', Number((liters * pricePerL).toFixed(2)), { shouldDirty: true });
-    } else if (liters && totalCost) {
-      form.setValue('price_per_l', Number((totalCost / liters)), { shouldDirty: true });
-    }
-  }, [watchedValues, form]);
+  // Calculated changes are now handled in the onChange handlers of the respective inputs
+  // to avoid infinite loops caused by useEffect watching form values
 
   const handleReceiptUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -274,7 +267,15 @@ export function FuelLogForm({
                         placeholder="35.50"
                         {...field}
                         disabled={isLoading}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        onChange={(e) => {
+                          const val = e.target.value ? Number(e.target.value) : undefined;
+                          field.onChange(val);
+                          // Calculate total if price exists
+                          const price = form.getValues('price_per_l');
+                          if (val && price) {
+                            form.setValue('total_cost', Number((val * price).toFixed(2)), { shouldDirty: true, shouldTouch: true });
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormDescription>
@@ -337,7 +338,15 @@ export function FuelLogForm({
                         placeholder="105.50"
                         {...field}
                         disabled={isLoading}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        onChange={(e) => {
+                          const val = e.target.value ? Number(e.target.value) : undefined;
+                          field.onChange(val);
+                          // Calculate total if liters exists
+                          const liters = form.getValues('liters');
+                          if (val && liters) {
+                            form.setValue('total_cost', Number((liters * val).toFixed(2)), { shouldDirty: true, shouldTouch: true });
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormDescription>
@@ -360,7 +369,16 @@ export function FuelLogForm({
                         step="0.01"
                         placeholder="3742.50"
                         {...field}
-                        disabled
+                        onChange={(e) => {
+                          const val = e.target.value ? Number(e.target.value) : undefined;
+                          field.onChange(val);
+                          // Calculate price if liters exists
+                          const liters = form.getValues('liters');
+                          if (val && liters) {
+                            form.setValue('price_per_l', Number((val / liters).toFixed(2)), { shouldDirty: true, shouldTouch: true });
+                          }
+                        }}
+                        disabled={isLoading}
                       />
                     </FormControl>
                     <FormDescription>

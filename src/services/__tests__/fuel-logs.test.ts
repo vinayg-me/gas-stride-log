@@ -279,6 +279,9 @@ describe('FuelLogService', () => {
 
       expect(mockSupabaseQuery.insert).toHaveBeenCalledWith({
         ...logData,
+        notes: null,
+        station: null,
+        receipt_url: null,
         total_cost: 4220,
       });
       expect(result).toEqual(mockCreatedLog);
