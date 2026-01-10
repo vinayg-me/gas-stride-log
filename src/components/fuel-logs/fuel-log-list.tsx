@@ -117,7 +117,7 @@ export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
                   
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="sm" className="opacity-100 group-hover:opacity-100 transition-opacity">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
