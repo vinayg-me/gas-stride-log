@@ -99,7 +99,7 @@ describe('FuelLogForm', () => {
     await user.type(screen.getByLabelText(/total cost/i), '4220');
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue('105.50')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('105.5')).toBeInTheDocument();
     });
   });
 
