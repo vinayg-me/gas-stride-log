@@ -1,0 +1,31 @@
+name: Keep Supabase Active
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  ping-website:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: Ping website to keep Supabase active
+        run: |
+          if [ -z "${{ secrets.WEBSITE_URL }}" ]; then
+            echo "⚠️ Warning: WEBSITE_URL secret is not set. Please add it in GitHub repository settings."
+            exit 1
+          fi
+          
+          echo "🌐 Pinging website: ${{ secrets.WEBSITE_URL }}"
+          
+          response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "${{ secrets.WEBSITE_URL }}")
+          
+          if [ "$response" -ge 200 ] && [ "$response" -lt 400 ]; then
+            echo "✅ Successfully pinged website (HTTP $response)"
+          else
+            echo "⚠️ Warning: Received HTTP $response response"
+            exit 1
+          fi
