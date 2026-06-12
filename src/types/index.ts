@@ -82,6 +82,7 @@ export interface AddCarForm {
   fuel_type: 'petrol' | 'diesel' | 'electric' | 'hybrid' | 'cng' | 'lpg';
   tank_capacity_l?: number;
   year?: number;
+  country?: 'IN' | 'US' | 'GB' | 'EU' | 'custom';
   currency?: string;
   distance_unit?: 'km' | 'mi';
   volume_unit?: 'L' | 'gal';

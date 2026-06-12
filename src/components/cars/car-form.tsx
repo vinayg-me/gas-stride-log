@@ -11,11 +11,11 @@ import { Loader2, Car, Globe, Settings2 } from 'lucide-react';
 import { Car as CarType, AddCarForm } from '@/types';
 
 const COUNTRY_PRESETS = {
-  IN: { name: 'India', currency: 'INR', distance_unit: 'km', volume_unit: 'L' as const },
-  US: { name: 'United States', currency: 'USD', distance_unit: 'mi' as const, volume_unit: 'gal' as const },
-  GB: { name: 'United Kingdom', currency: 'GBP', distance_unit: 'mi' as const, volume_unit: 'L' as const },
-  EU: { name: 'Europe', currency: 'EUR', distance_unit: 'km' as const, volume_unit: 'L' as const },
-};
+  IN: { name: 'India', currency: 'INR', distance_unit: 'km', volume_unit: 'L' },
+  US: { name: 'United States', currency: 'USD', distance_unit: 'mi', volume_unit: 'gal' },
+  GB: { name: 'United Kingdom', currency: 'GBP', distance_unit: 'mi', volume_unit: 'L' },
+  EU: { name: 'Europe', currency: 'EUR', distance_unit: 'km', volume_unit: 'L' },
+} as const;
 
 const getCountryFromCarSettings = (currency?: string, distance?: string, volume?: string) => {
   if (!currency || !distance || !volume) return 'IN';

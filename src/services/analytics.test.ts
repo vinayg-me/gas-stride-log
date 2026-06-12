@@ -27,6 +27,7 @@ describe('AnalyticsService', () => {
 
     vi.mocked(CarService.getCarById).mockResolvedValue({
       id: 'car-1',
+      owner_id: 'user-1',
       currency: 'INR',
       distance_unit: 'km',
       volume_unit: 'L',
@@ -76,7 +77,7 @@ describe('AnalyticsService', () => {
         averageMileage: 15.48,
       };
 
-      (FuelLogService.calculateMileageForCar as any).mockResolvedValue(mockMileageData);
+      vi.mocked(FuelLogService.calculateMileageForCar).mockResolvedValue(mockMileageData);
 
       const result = await AnalyticsService.getMileageTrends('car-1', 12);
 
@@ -136,7 +137,7 @@ describe('AnalyticsService', () => {
         },
       ];
 
-      (FuelLogService.getFuelLogs as any).mockResolvedValue(mockLogs);
+      vi.mocked(FuelLogService.getFuelLogs).mockResolvedValue(mockLogs);
 
       const result = await AnalyticsService.getSpendingTrends('car-1', 12);
 

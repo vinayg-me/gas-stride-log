@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CarForm } from '../car-form';
 import { AddCarForm } from '@/types';
 
@@ -30,7 +30,7 @@ describe('CarForm', () => {
 
   it('should submit form with valid data', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <CarForm
         onSubmit={mockOnSubmit}
@@ -64,7 +64,7 @@ describe('CarForm', () => {
 
   it('should show validation errors for invalid data', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <CarForm
         onSubmit={mockOnSubmit}
@@ -85,7 +85,7 @@ describe('CarForm', () => {
 
   it('should validate registration number format', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <CarForm
         onSubmit={mockOnSubmit}
