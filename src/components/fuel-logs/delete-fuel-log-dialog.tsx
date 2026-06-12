@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Trash2, Loader2 } from 'lucide-react';
 import { FuelLog } from '@/types';
 import { useDeleteFuelLog } from '@/hooks/use-fuel-logs';
+import { useCars } from '@/hooks/use-cars';
+import { getCarUnits } from '@/lib/units';
 
 interface DeleteFuelLogDialogProps {
   fuelLog: FuelLog;
@@ -30,6 +32,9 @@ export function DeleteFuelLogDialog({
 }: DeleteFuelLogDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const deleteFuelLogMutation = useDeleteFuelLog();
+  const { data: cars = [] } = useCars();
+  const car = cars.find(c => c.id === fuelLog.car_id);
+  const { currencySymbol, volumeUnit } = getCarUnits(car);
 
   const handleOpenChange = (newOpen: boolean) => {
     if (onOpenChange) {
@@ -72,9 +77,9 @@ export function DeleteFuelLogDialog({
             <br />
             Date: {new Date(fuelLog.filled_at).toLocaleDateString()}
             <br />
-            Amount: {fuelLog.liters}L
+            Amount: {fuelLog.liters}{volumeUnit}
             <br />
-            {fuelLog.total_cost && `Cost: ₹${fuelLog.total_cost.toFixed(2)}`}
+            {fuelLog.total_cost && `Cost: ${currencySymbol}${fuelLog.total_cost.toFixed(2)}`}
             <br />
             <br />
             This action cannot be undone.

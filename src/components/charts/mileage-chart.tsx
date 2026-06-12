@@ -3,6 +3,8 @@ import { TrendingUp } from 'lucide-react';
 import { useMileageTrends } from '@/hooks/use-analytics';
 import { ChartCard } from './chart-card';
 import { useChartConfig } from '@/hooks/use-chart-config';
+import { useCars } from '@/hooks/use-cars';
+import { getCarUnits } from '@/lib/units';
 
 interface MileageChartProps {
   carId: string;
@@ -15,10 +17,12 @@ interface MileageChartProps {
 export function MileageChart({ carId, months = 12, height = 300, className, fuelType = 'petrol' }: MileageChartProps) {
   const { data: mileageData = [], isLoading, error } = useMileageTrends(carId, months);
   const { commonAxisProps, commonTooltipProps, commonGridProps, defaultMargin } = useChartConfig();
+  const { data: cars = [] } = useCars();
+  const car = cars.find(c => c.id === carId);
+  const { efficiencyUnit } = getCarUnits(car);
 
-  const isElectric = fuelType === 'electric';
-  const isCng = fuelType === 'cng';
-  const efficiencyUnit = isElectric ? 'km/kWh' : (isCng ? 'km/kg' : 'km/L');
+  const isElectric = car?.fuel_type === 'electric';
+  const isCng = car?.fuel_type === 'cng';
 
   return (
     <ChartCard
@@ -59,7 +63,7 @@ export function MileageChart({ carId, months = 12, height = 300, className, fuel
             strokeWidth={2}
             dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
             activeDot={{ r: 6, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
-            name={isElectric ? "Efficiency (km/kWh)" : "Mileage (km/L)"}
+            name={isElectric ? "Efficiency" : `Mileage (${efficiencyUnit})`}
           />
         </LineChart>
       </ResponsiveContainer>

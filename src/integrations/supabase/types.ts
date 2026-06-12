@@ -42,6 +42,8 @@ export type Database = {
       cars: {
         Row: {
           created_at: string
+          currency: string
+          distance_unit: string
           fuel_type: string
           id: string
           make: string
@@ -50,10 +52,13 @@ export type Database = {
           registration: string
           tank_capacity_l: number | null
           updated_at: string
+          volume_unit: string
           year: number | null
         }
         Insert: {
           created_at?: string
+          currency?: string
+          distance_unit?: string
           fuel_type: string
           id?: string
           make: string
@@ -62,10 +67,13 @@ export type Database = {
           registration: string
           tank_capacity_l?: number | null
           updated_at?: string
+          volume_unit?: string
           year?: number | null
         }
         Update: {
           created_at?: string
+          currency?: string
+          distance_unit?: string
           fuel_type?: string
           id?: string
           make?: string
@@ -74,6 +82,7 @@ export type Database = {
           registration?: string
           tank_capacity_l?: number | null
           updated_at?: string
+          volume_unit?: string
           year?: number | null
         }
         Relationships: [

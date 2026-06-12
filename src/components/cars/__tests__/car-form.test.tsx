@@ -54,6 +54,10 @@ describe('CarForm', () => {
         fuel_type: 'petrol',
         year: 2020,
         tank_capacity_l: 40,
+        country: 'IN',
+        currency: 'INR',
+        distance_unit: 'km',
+        volume_unit: 'L',
       });
     });
   });
@@ -89,7 +93,7 @@ describe('CarForm', () => {
       />
     );
 
-    await user.type(screen.getByLabelText(/registration number/i), 'invalid');
+    await user.type(screen.getByLabelText(/registration number/i), 'inv@lid');
     await user.click(screen.getByRole('button', { name: /add car/i }));
 
     await waitFor(() => {

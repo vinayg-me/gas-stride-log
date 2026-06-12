@@ -13,6 +13,8 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useOverallAnalytics } from '@/hooks/use-analytics';
 import { useCars } from '@/hooks/use-cars';
+import { useCarStatistics } from '@/hooks/use-fuel-logs';
+import { getCarUnits } from '@/lib/units';
 import { MileageChart } from '@/components/charts/mileage-chart';
 import { SpendingChart } from '@/components/charts/spending-chart';
 import { CostPerKmChart } from '@/components/charts/cost-per-km-chart';
@@ -30,12 +32,25 @@ export default function Analytics() {
     : [selectedCarId];
 
   const { data: overallStats, isLoading: isLoadingStats } = useOverallAnalytics(carIds);
+  const { data: singleCarStats, isLoading: isLoadingSingleStats } = useCarStatistics(selectedCarId !== 'all' ? selectedCarId : '');
 
   const selectedCar = selectedCarId !== 'all' ? cars.find(c => c.id === selectedCarId) : null;
+  
+  const { currencySymbol, distanceUnit, efficiencyUnit } = getCarUnits(selectedCar);
+  
   const isElectric = selectedCar?.fuel_type === 'electric';
-  const isCng = selectedCar?.fuel_type === 'cng';
-  const efficiencyUnit = isElectric ? 'km/kWh' : (isCng ? 'km/kg' : 'km/L');
   const descriptionLabel = isElectric ? 'Total charging cost' : 'Total fuel cost';
+
+  // Determine which stats and labels to use
+  const totalSpend = selectedCarId === 'all' ? (overallStats?.totalSpend || 0) : (singleCarStats?.totalSpend || 0);
+  const averageMileage = selectedCarId === 'all' ? (overallStats?.averageMileage || 0) : (singleCarStats?.averageMileage || 0);
+  const costPerKm = selectedCarId === 'all' ? (overallStats?.costPerKm || 0) : (singleCarStats?.costPerKm || 0);
+  const totalDistance = selectedCarId === 'all' ? (overallStats?.totalDistance || 0) : (singleCarStats?.totalDistance || 0);
+  const displayCurrency = selectedCarId === 'all' ? '₹' : currencySymbol;
+  const displayDistance = selectedCarId === 'all' ? 'km' : distanceUnit;
+  const displayEfficiency = selectedCarId === 'all' ? 'km/L' : efficiencyUnit;
+
+  const isLoadingData = isLoadingStats || (selectedCarId !== 'all' && isLoadingSingleStats);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -118,31 +133,31 @@ export default function Analytics() {
       >
         <StatCard
           title="Total Spend"
-          value={`₹${(overallStats?.totalSpend || 0).toLocaleString()}`}
+          value={`${displayCurrency}${totalSpend.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           icon={<Wallet className="w-4 h-4 text-primary" />}
           description={descriptionLabel}
-          isLoading={isLoadingStats}
+          isLoading={isLoadingData}
         />
         <StatCard
-          title="Avg. Mileage"
-          value={`${(overallStats?.averageMileage || 0).toFixed(1)} ${efficiencyUnit}`}
+          title={isElectric ? "Avg. Efficiency" : "Avg. Mileage"}
+          value={`${averageMileage.toFixed(1)} ${displayEfficiency}`}
           icon={<TrendingUp className="w-4 h-4 text-green-500" />}
           description="Weighted average"
-          isLoading={isLoadingStats}
+          isLoading={isLoadingData}
         />
         <StatCard
-          title="Cost / KM"
-          value={`₹${(overallStats?.costPerKm || 0).toFixed(2)}`}
+          title={`Cost / ${displayDistance.toUpperCase()}`}
+          value={`${displayCurrency}${costPerKm.toFixed(2)}`}
           icon={<TrendingUp className="w-4 h-4 text-orange-500" />}
           description="Running efficiency"
-          isLoading={isLoadingStats}
+          isLoading={isLoadingData}
         />
         <StatCard
           title="Total Distance"
-          value={`${(overallStats?.totalDistance || 0).toLocaleString()} km`}
+          value={`${totalDistance.toLocaleString()} ${displayDistance}`}
           icon={<LayoutDashboard className="w-4 h-4 text-blue-500" />}
-          description="Total km tracked"
-          isLoading={isLoadingStats}
+          description={`Total ${displayDistance} tracked`}
+          isLoading={isLoadingData}
         />
       </motion.div>
 
@@ -200,7 +215,15 @@ export default function Analytics() {
   );
 }
 
-function StatCard({ title, value, icon, description, isLoading }: any) {
+interface StatCardProps {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  description: string;
+  isLoading: boolean;
+}
+
+function StatCard({ title, value, icon, description, isLoading }: StatCardProps) {
   return (
     <Card>
       <CardContent className="p-6">

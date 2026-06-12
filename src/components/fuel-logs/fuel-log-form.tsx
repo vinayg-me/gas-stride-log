@@ -15,6 +15,7 @@ import { FuelLog, AddFuelLogForm, Car } from '@/types';
 import { useUploadReceipt } from '@/hooks/use-fuel-logs';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from '@/hooks/use-toast';
+import { getCarUnits } from '@/lib/units';
 
 const fuelLogFormSchema = z.object({
   car_id: z.string().min(1, 'Please select a car'),
@@ -94,10 +95,29 @@ export function FuelLogForm({
   // Auto-calculate missing price or total cost
   useEffect(() => {
     const [liters, pricePerL, totalCost] = watchedValues;
-    if (liters && pricePerL) {
-      form.setValue('total_cost', Number((liters * pricePerL).toFixed(2)), { shouldDirty: true });
-    } else if (liters && totalCost) {
-      form.setValue('price_per_l', Number((totalCost / liters)), { shouldDirty: true });
+    const activeField = document.activeElement?.getAttribute('name');
+
+    if (activeField === 'price_per_l' || activeField === 'liters') {
+      if (liters && pricePerL) {
+        const calculatedTotal = Number((liters * pricePerL).toFixed(2));
+        if (totalCost !== calculatedTotal) {
+          form.setValue('total_cost', calculatedTotal, { shouldDirty: true });
+        }
+      }
+    } else if (activeField === 'total_cost') {
+      if (liters && totalCost) {
+        const calculatedPrice = Number((totalCost / liters).toFixed(2));
+        if (pricePerL !== calculatedPrice) {
+          form.setValue('price_per_l', calculatedPrice, { shouldDirty: true });
+        }
+      }
+    } else {
+      // If neither is focused (e.g., initial render or programmatic change)
+      if (liters && pricePerL && !totalCost) {
+        form.setValue('total_cost', Number((liters * pricePerL).toFixed(2)), { shouldDirty: true });
+      } else if (liters && totalCost && !pricePerL) {
+        form.setValue('price_per_l', Number((totalCost / liters).toFixed(2)), { shouldDirty: true });
+      }
     }
   }, [watchedValues, form]);
 
@@ -174,11 +194,12 @@ export function FuelLogForm({
   };
 
   const selectedCar = cars.find(car => car.id === form.watch('car_id'));
+  const { currencySymbol, distanceUnit, volumeUnit, efficiencyUnit } = getCarUnits(selectedCar);
+  
   const isElectric = selectedCar?.fuel_type === 'electric';
   const isCng = selectedCar?.fuel_type === 'cng';
-  const volumeUnit = isElectric ? 'kWh' : (isCng ? 'kg' : 'L');
   const volumeLabel = isElectric ? 'Electricity Added' : (isCng ? 'Gas Added' : 'Fuel Amount');
-  const priceLabel = isElectric ? 'Price per kWh' : (isCng ? 'Price per kg' : 'Price per Liter');
+  const priceLabel = isElectric ? 'Price per kWh' : (isCng ? 'Price per kg' : `Price per ${volumeUnit === 'gal' ? 'Gallon' : 'Liter'}`);
 
   return (
     <Card className={className}>
@@ -244,7 +265,7 @@ export function FuelLogForm({
                 name="odometer_km"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Odometer Reading (km)</FormLabel>
+                    <FormLabel>Odometer Reading ({distanceUnit})</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -256,7 +277,7 @@ export function FuelLogForm({
                       />
                     </FormControl>
                     <FormDescription>
-                      Current odometer reading in kilometers
+                      Current odometer reading in {distanceUnit === 'mi' ? 'miles' : 'kilometers'}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -283,7 +304,7 @@ export function FuelLogForm({
                       />
                     </FormControl>
                     <FormDescription>
-                      Amount of {isElectric ? 'electricity' : 'fuel'} added in {isElectric ? 'kilowatt-hours' : 'liters'}
+                      Amount of {isElectric ? 'electricity' : 'fuel'} added in {isElectric ? 'kilowatt-hours' : (volumeUnit === 'gal' ? 'gallons' : 'liters')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -322,8 +343,8 @@ export function FuelLogForm({
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
                   {isElectric 
-                    ? 'Partial charges are included in totals but not used for efficiency calculations. Only full-to-full charges provide accurate km/kWh measurements.'
-                    : 'Partial fills are included in totals but not used for mileage calculations. Only full-to-full fills provide accurate km/L measurements.'
+                    ? `Partial charges are included in totals but not used for efficiency calculations. Only full-to-full charges provide accurate ${efficiencyUnit} measurements.`
+                    : `Partial fills are included in totals but not used for mileage calculations. Only full-to-full fills provide accurate ${efficiencyUnit} measurements.`
                   }
                 </AlertDescription>
               </Alert>
@@ -336,7 +357,7 @@ export function FuelLogForm({
                 name="price_per_l"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{priceLabel} (₹)</FormLabel>
+                    <FormLabel>{priceLabel} ({currencySymbol})</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -348,7 +369,7 @@ export function FuelLogForm({
                       />
                     </FormControl>
                     <FormDescription>
-                      Price per {volumeUnit.toLowerCase()} in rupees
+                      Price per {volumeUnit.toLowerCase()} in {currencySymbol}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -360,18 +381,18 @@ export function FuelLogForm({
                 name="total_cost"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Total Cost (₹)</FormLabel>
+                    <FormLabel>Total Cost ({currencySymbol})</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
                         placeholder="3742.50"
                         {...field}
-                        disabled
+                        disabled={isLoading}
                       />
                     </FormControl>
                     <FormDescription>
-                      Total amount paid in rupees
+                      Total amount paid in {currencySymbol}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

@@ -3,6 +3,8 @@ import { DollarSign } from 'lucide-react';
 import { useSpendingTrends } from '@/hooks/use-analytics';
 import { ChartCard } from './chart-card';
 import { useChartConfig } from '@/hooks/use-chart-config';
+import { useCars } from '@/hooks/use-cars';
+import { getCarUnits } from '@/lib/units';
 
 interface SpendingChartProps {
   carId: string;
@@ -14,6 +16,13 @@ interface SpendingChartProps {
 export function SpendingChart({ carId, months = 12, height = 300, className }: SpendingChartProps) {
   const { data: spendingData = [], isLoading, error } = useSpendingTrends(carId, months);
   const { commonAxisProps, commonTooltipProps, commonGridProps, defaultMargin } = useChartConfig();
+  const { data: cars = [] } = useCars();
+  const car = cars.find(c => c.id === carId);
+  const { currencySymbol, volumeUnit } = getCarUnits(car);
+
+  const isElectric = car?.fuel_type === 'electric';
+  const isCng = car?.fuel_type === 'cng';
+  const volumeLabel = isElectric ? 'kWh' : (isCng ? 'kg' : (volumeUnit === 'gal' ? 'Gallons' : 'Liters'));
 
   return (
     <ChartCard
@@ -38,20 +47,20 @@ export function SpendingChart({ carId, months = 12, height = 300, className }: S
           <YAxis 
             yAxisId="amount"
             {...commonAxisProps}
-            label={{ value: 'Amount (₹)', angle: -90, position: 'insideLeft' }}
+            label={{ value: `Amount (${currencySymbol})`, angle: -90, position: 'insideLeft' }}
           />
           <YAxis 
             yAxisId="liters"
             orientation="right"
             {...commonAxisProps}
-            label={{ value: 'Liters', angle: 90, position: 'insideRight' }}
+            label={{ value: volumeLabel, angle: 90, position: 'insideRight' }}
           />
           <Tooltip
             {...commonTooltipProps}
             labelFormatter={(value) => new Date(value + '-01').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
             formatter={(value: number, name: string) => {
-              if (name === 'Amount') return [`₹${value.toLocaleString()}`, 'Amount'];
-              if (name === 'Liters') return [`${value.toFixed(1)}L`, 'Liters'];
+              if (name === 'Amount') return [`${currencySymbol}${value.toLocaleString()}`, 'Amount'];
+              if (name === 'Volume') return [`${value.toFixed(1)}${volumeUnit}`, volumeLabel];
               return [value, name];
             }}
           />
@@ -70,7 +79,7 @@ export function SpendingChart({ carId, months = 12, height = 300, className }: S
             stroke="hsl(var(--secondary))"
             strokeWidth={2}
             dot={{ fill: 'hsl(var(--secondary))', strokeWidth: 2, r: 4 }}
-            name="Liters"
+            name="Volume"
           />
         </ComposedChart>
       </ResponsiveContainer>
