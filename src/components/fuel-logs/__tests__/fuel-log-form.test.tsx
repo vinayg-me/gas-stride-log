@@ -34,6 +34,16 @@ const mockCars: Car[] = [
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
   },
+  {
+    id: '2',
+    owner_id: 'user-1',
+    registration: 'KA-01-EV-9999',
+    make: 'Tata',
+    model: 'Nexon EV',
+    fuel_type: 'electric',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+  },
 ];
 
 const mockOnSubmit = vi.fn();
@@ -269,5 +279,30 @@ describe('FuelLogForm', () => {
     await user.click(screen.getByRole('button', { name: /cancel/i }));
 
     expect(mockOnCancel).toHaveBeenCalled();
+  });
+
+  it('should render EV specific labels and warnings when an electric car is selected', async () => {
+    const user = userEvent.setup();
+    
+    render(
+      <FuelLogForm
+        cars={mockCars}
+        onSubmit={mockOnSubmit}
+        onCancel={mockOnCancel}
+      />
+    );
+
+    // Select the electric car
+    await user.selectOptions(screen.getByLabelText(/car/i), '2');
+
+    // Labels should adapt
+    expect(screen.getByLabelText(/electricity added/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/price per kwh/i)).toBeInTheDocument();
+
+    // Select partial fill to check warning
+    await user.click(screen.getByLabelText(/partial fill/i));
+    await waitFor(() => {
+      expect(screen.getByText(/partial charges are included in totals but not used for efficiency calculations/i)).toBeInTheDocument();
+    });
   });
 });

@@ -93,7 +93,7 @@ describe('CarForm', () => {
     await user.click(screen.getByRole('button', { name: /add car/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/please enter a valid indian registration number/i)).toBeInTheDocument();
+      expect(screen.getByText(/please enter a valid registration number/i)).toBeInTheDocument();
     });
 
     expect(mockOnSubmit).not.toHaveBeenCalled();

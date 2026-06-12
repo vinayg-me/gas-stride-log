@@ -11,7 +11,8 @@ export class FuelLogService {
     let query = supabase
       .from('fuel_logs')
       .select('*')
-      .order('filled_at', { ascending: false });
+      .order('filled_at', { ascending: false })
+      .order('odometer_km', { ascending: false });
 
     if (carId) {
       query = query.eq('car_id', carId);
@@ -211,9 +212,12 @@ export class FuelLogService {
       processedPerCar.push(this.computeMileageForLogs(logs));
     }
 
-    const flattenedLogs = processedPerCar.flatMap(x => x.logs).sort((a, b) =>
-      new Date(b.filled_at).getTime() - new Date(a.filled_at).getTime()
-    );
+    const flattenedLogs = processedPerCar.flatMap(x => x.logs).sort((a, b) => {
+      const dateA = new Date(a.filled_at).getTime();
+      const dateB = new Date(b.filled_at).getTime();
+      if (dateA !== dateB) return dateB - dateA;
+      return b.odometer_km - a.odometer_km;
+    });
 
     const totalMileage = processedPerCar.reduce((s, x) => s + x.averageMileage * (x.logs.filter(l => l.mileage != null).length > 0 ? 1 : 0), 0);
     const mileageEntries = processedPerCar.reduce((s, x) => s + x.logs.filter(l => l.mileage != null).length, 0);
@@ -226,9 +230,12 @@ export class FuelLogService {
 
   private static computeMileageForLogs(logs: FuelLog[]): { logs: FuelLogWithMetrics[]; averageMileage: number } {
     // Sort by filled_at ascending for calculation per car
-    const sortedLogs = [...logs].sort((a, b) =>
-      new Date(a.filled_at).getTime() - new Date(b.filled_at).getTime()
-    );
+    const sortedLogs = [...logs].sort((a, b) => {
+      const dateA = new Date(a.filled_at).getTime();
+      const dateB = new Date(b.filled_at).getTime();
+      if (dateA !== dateB) return dateA - dateB;
+      return a.odometer_km - b.odometer_km;
+    });
 
     const logsWithMileage: FuelLogWithMetrics[] = [];
     let totalMileage = 0;
