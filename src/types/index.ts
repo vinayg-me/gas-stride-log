@@ -6,7 +6,7 @@ export interface Car {
   registration: string;
   make: string;
   model: string;
-  fuel_type: 'petrol';
+  fuel_type: 'petrol' | 'diesel' | 'electric' | 'hybrid' | 'cng' | 'lpg';
   tank_capacity_l?: number;
   year?: number;
   created_at: string;
@@ -76,7 +76,7 @@ export interface AddCarForm {
   registration: string;
   make: string;
   model: string;
-  fuel_type: 'petrol';
+  fuel_type: 'petrol' | 'diesel' | 'electric' | 'hybrid' | 'cng' | 'lpg';
   tank_capacity_l?: number;
   year?: number;
 }

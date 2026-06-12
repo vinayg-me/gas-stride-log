@@ -16,8 +16,8 @@ const carFormSchema = z.object({
     .min(1, 'Registration number is required')
     .max(20, 'Registration number must be less than 20 characters')
     .regex(
-      /^[A-Z]{2}[-\s]?\d{2}[-\s]?[A-Z]{1,2}[-\s]?\d{4}$/i,
-      'Please enter a valid Indian registration number (e.g., KA-01-AB-1234)'
+      /^[A-Z0-9-\s]{2,15}$/i,
+      'Please enter a valid registration number (letters, numbers, spaces, and hyphens)'
     ),
   make: z
     .string()
@@ -27,7 +27,7 @@ const carFormSchema = z.object({
     .string()
     .min(1, 'Model is required')
     .max(50, 'Model must be less than 50 characters'),
-  fuel_type: z.literal('petrol'),
+  fuel_type: z.enum(['petrol', 'diesel', 'electric', 'hybrid', 'cng', 'lpg']),
   tank_capacity_l: z
     .number()
     .positive('Tank capacity must be positive')
@@ -140,10 +140,15 @@ export function CarForm({ car, onSubmit, onCancel, isLoading = false, className 
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="petrol">Petrol</SelectItem>
+                        <SelectItem value="diesel">Diesel</SelectItem>
+                        <SelectItem value="electric">Electric (EV)</SelectItem>
+                        <SelectItem value="hybrid">Hybrid</SelectItem>
+                        <SelectItem value="cng">CNG</SelectItem>
+                        <SelectItem value="lpg">LPG</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Currently only petrol vehicles are supported
+                      Select the primary fuel type for your vehicle
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

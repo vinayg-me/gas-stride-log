@@ -90,9 +90,14 @@ export function useCreateFuelLog() {
       queryClient.invalidateQueries({ queryKey: [...FUEL_LOG_QUERY_KEYS.all, 'mileage', 'all-cars'] });
       queryClient.invalidateQueries({ queryKey: [...FUEL_LOG_QUERY_KEYS.all, 'overall'] });
 
+      // Look up car in cache to set correct dynamic unit (L vs kWh vs kg)
+      const cars = queryClient.getQueryData<Car[]>(['cars', 'list']) || [];
+      const car = cars.find((c) => c.id === newLog.car_id);
+      const unit = car?.fuel_type === 'electric' ? 'kWh' : (car?.fuel_type === 'cng' ? 'kg' : 'L');
+
       toast({
         title: "Fuel Log Added Successfully",
-        description: `${newLog.liters}L recorded for ${new Date(newLog.filled_at).toLocaleDateString()}`,
+        description: `${newLog.liters}${unit} recorded for ${new Date(newLog.filled_at).toLocaleDateString()}`,
       });
     },
     onError: (error: Error) => {

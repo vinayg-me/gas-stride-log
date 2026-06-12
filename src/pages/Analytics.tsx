@@ -31,6 +31,12 @@ export default function Analytics() {
 
   const { data: overallStats, isLoading: isLoadingStats } = useOverallAnalytics(carIds);
 
+  const selectedCar = selectedCarId !== 'all' ? cars.find(c => c.id === selectedCarId) : null;
+  const isElectric = selectedCar?.fuel_type === 'electric';
+  const isCng = selectedCar?.fuel_type === 'cng';
+  const efficiencyUnit = isElectric ? 'km/kWh' : (isCng ? 'km/kg' : 'km/L');
+  const descriptionLabel = isElectric ? 'Total charging cost' : 'Total fuel cost';
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -114,12 +120,12 @@ export default function Analytics() {
           title="Total Spend"
           value={`₹${(overallStats?.totalSpend || 0).toLocaleString()}`}
           icon={<Wallet className="w-4 h-4 text-primary" />}
-          description="Total fuel cost"
+          description={descriptionLabel}
           isLoading={isLoadingStats}
         />
         <StatCard
           title="Avg. Mileage"
-          value={`${(overallStats?.averageMileage || 0).toFixed(1)} km/L`}
+          value={`${(overallStats?.averageMileage || 0).toFixed(1)} ${efficiencyUnit}`}
           icon={<TrendingUp className="w-4 h-4 text-green-500" />}
           description="Weighted average"
           isLoading={isLoadingStats}
@@ -162,7 +168,7 @@ export default function Analytics() {
           ) : (
             <>
               <TabsContent value="mileage">
-                <MileageChart carId={selectedCarId} months={Number(timeRange)} />
+                <MileageChart carId={selectedCarId} months={Number(timeRange)} fuelType={selectedCar?.fuel_type} />
               </TabsContent>
               <TabsContent value="spending">
                 <SpendingChart carId={selectedCarId} months={Number(timeRange)} />

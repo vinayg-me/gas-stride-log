@@ -174,6 +174,11 @@ export function FuelLogForm({
   };
 
   const selectedCar = cars.find(car => car.id === form.watch('car_id'));
+  const isElectric = selectedCar?.fuel_type === 'electric';
+  const isCng = selectedCar?.fuel_type === 'cng';
+  const volumeUnit = isElectric ? 'kWh' : (isCng ? 'kg' : 'L');
+  const volumeLabel = isElectric ? 'Electricity Added' : (isCng ? 'Gas Added' : 'Fuel Amount');
+  const priceLabel = isElectric ? 'Price per kWh' : (isCng ? 'Price per kg' : 'Price per Liter');
 
   return (
     <Card className={className}>
@@ -266,7 +271,7 @@ export function FuelLogForm({
                 name="liters"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Fuel Amount (L)</FormLabel>
+                    <FormLabel>{volumeLabel} ({volumeUnit})</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -278,7 +283,7 @@ export function FuelLogForm({
                       />
                     </FormControl>
                     <FormDescription>
-                      Amount of fuel added in liters
+                      Amount of {isElectric ? 'electricity' : 'fuel'} added in {isElectric ? 'kilowatt-hours' : 'liters'}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -316,8 +321,10 @@ export function FuelLogForm({
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  Partial fills are included in totals but not used for mileage calculations. 
-                  Only full-to-full fills provide accurate km/L measurements.
+                  {isElectric 
+                    ? 'Partial charges are included in totals but not used for efficiency calculations. Only full-to-full charges provide accurate km/kWh measurements.'
+                    : 'Partial fills are included in totals but not used for mileage calculations. Only full-to-full fills provide accurate km/L measurements.'
+                  }
                 </AlertDescription>
               </Alert>
             )}
@@ -329,7 +336,7 @@ export function FuelLogForm({
                 name="price_per_l"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price per Liter (₹)</FormLabel>
+                    <FormLabel>{priceLabel} (₹)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -341,7 +348,7 @@ export function FuelLogForm({
                       />
                     </FormControl>
                     <FormDescription>
-                      Price per liter in rupees
+                      Price per {volumeUnit.toLowerCase()} in rupees
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

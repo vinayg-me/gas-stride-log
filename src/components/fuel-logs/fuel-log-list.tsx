@@ -68,6 +68,11 @@ export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
     <div className={cn("space-y-4", className)}>
       {logsWithMileage.map((log, index) => {
         const car = cars.find(c => c.id === log.car_id);
+        const isElectric = car?.fuel_type === 'electric';
+        const isCng = car?.fuel_type === 'cng';
+        const volumeUnit = isElectric ? 'kWh' : (isCng ? 'kg' : 'L');
+        const efficiencyUnit = isElectric ? 'km/kWh' : (isCng ? 'km/kg' : 'km/L');
+        const unitLabel = isElectric ? 'per kWh' : (isCng ? 'per kg' : 'per liter');
         
         return (
           <motion.div
@@ -86,7 +91,7 @@ export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-foreground">
-                          {log.liters}L
+                          {log.liters}{volumeUnit}
                         </h3>
                         {log.is_partial && (
                           <Badge variant="secondary" className="text-xs">
@@ -95,7 +100,7 @@ export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
                         )}
                         {log.mileage && (
                           <Badge variant="outline" className="text-xs">
-                            {log.mileage.toFixed(1)} km/L
+                            {log.mileage.toFixed(1)} {efficiencyUnit}
                           </Badge>
                         )}
                       </div>
@@ -158,7 +163,7 @@ export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
                       <div className="text-lg font-bold text-secondary">
                         ₹{log.price_per_l.toFixed(2)}
                       </div>
-                      <div className="text-xs text-muted-foreground">per liter</div>
+                      <div className="text-xs text-muted-foreground">{unitLabel}</div>
                     </div>
                   )}
                   
