@@ -1,10 +1,13 @@
 import { FuelLogService } from './fuel-logs';
 import { CarService } from './cars';
 import { MileageChartData, SpendChartData, ChartDataPoint } from '@/types';
+import { getCarUnits, convertCurrency, convertDistance, convertVolume } from '@/lib/units';
 
 export class AnalyticsService {
   static async getMileageTrends(carId: string, months: number = 12): Promise<MileageChartData[]> {
     const { logs } = await FuelLogService.calculateMileageForCar(carId);
+    const car = await CarService.getCarById(carId);
+    const { efficiencyUnit } = getCarUnits(car);
     
     // Filter logs with mileage data from the last N months
     const cutoffDate = new Date();
@@ -15,7 +18,7 @@ export class AnalyticsService {
       .map(log => ({
         date: log.filled_at,
         value: log.mileage!,
-        label: `${log.mileage!.toFixed(1)} km/L`,
+        label: `${log.mileage!.toFixed(1)} ${efficiencyUnit}`,
         kmpl: log.mileage!,
         distance: log.distance || 0,
         liters: log.liters,
@@ -27,6 +30,8 @@ export class AnalyticsService {
 
   static async getSpendingTrends(carId: string, months: number = 12): Promise<SpendChartData[]> {
     const logs = await FuelLogService.getFuelLogs(carId);
+    const car = await CarService.getCarById(carId);
+    const { currencySymbol } = getCarUnits(car);
     
     // Group logs by month
     const monthlyData = new Map<string, { amount: number; liters: number; fills: number }>();
@@ -52,7 +57,7 @@ export class AnalyticsService {
       .map(([month, data]) => ({
         date: month,
         value: data.amount,
-        label: `₹${data.amount.toLocaleString()}`,
+        label: `${currencySymbol}${data.amount.toLocaleString()}`,
         amount: data.amount,
         liters: data.liters,
         fills: data.fills,
@@ -64,8 +69,10 @@ export class AnalyticsService {
 
   static async getCostPerKmTrends(carId: string, months: number = 12): Promise<ChartDataPoint[]> {
     const logs = await FuelLogService.getFuelLogs(carId);
+    const car = await CarService.getCarById(carId);
+    const { currencySymbol, distanceUnit } = getCarUnits(car);
     
-    // Calculate cost per km for periods between fills
+    // Calculate cost per km/mi for periods between fills
     const costData: ChartDataPoint[] = [];
     const cutoffDate = new Date();
     cutoffDate.setMonth(cutoffDate.getMonth() - months);
@@ -86,7 +93,7 @@ export class AnalyticsService {
         costData.push({
           date: currentLog.filled_at,
           value: costPerKm,
-          label: `₹${costPerKm.toFixed(2)}/km`,
+          label: `${currencySymbol}${costPerKm.toFixed(2)}/${distanceUnit}`,
         });
       }
     }
@@ -96,6 +103,8 @@ export class AnalyticsService {
 
   static async getFuelPriceTrends(carId: string, months: number = 12): Promise<ChartDataPoint[]> {
     const logs = await FuelLogService.getFuelLogs(carId);
+    const car = await CarService.getCarById(carId);
+    const { currencySymbol, volumeUnit } = getCarUnits(car);
     
     const cutoffDate = new Date();
     cutoffDate.setMonth(cutoffDate.getMonth() - months);
@@ -105,7 +114,7 @@ export class AnalyticsService {
       .map(log => ({
         date: log.filled_at,
         value: log.price_per_l!,
-        label: `₹${log.price_per_l!.toFixed(2)}/L`,
+        label: `${currencySymbol}${log.price_per_l!.toFixed(2)}/${volumeUnit}`,
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
@@ -133,27 +142,38 @@ export class AnalyticsService {
       cars.map(car => FuelLogService.getCarStatistics(car!.id))
     );
     
-    const totalSpend = allStats.reduce((sum, stats) => sum + stats.totalSpend, 0);
-    const totalLiters = allStats.reduce((sum, stats) => sum + stats.totalLiters, 0);
-    const totalDistance = allStats.reduce((sum, stats) => sum + stats.totalDistance, 0);
-    const monthlySpend = allStats.reduce((sum, stats) => sum + stats.last30DaysSpend, 0);
+    let totalSpendInInr = 0;
+    let totalLitersInL = 0;
+    let totalDistanceInKm = 0;
+    let monthlySpendInInr = 0;
+
+    for (let i = 0; i < cars.length; i++) {
+      const car = cars[i]!;
+      const stats = allStats[i];
+      const { currency, distanceUnit, volumeUnit } = getCarUnits(car);
+
+      totalSpendInInr += convertCurrency(stats.totalSpend, currency, 'INR');
+      monthlySpendInInr += convertCurrency(stats.last30DaysSpend, currency, 'INR');
+      totalDistanceInKm += convertDistance(stats.totalDistance, distanceUnit, 'km');
+
+      if (volumeUnit === 'gal' || volumeUnit === 'L') {
+        totalLitersInL += convertVolume(stats.totalLiters, volumeUnit, 'L');
+      } else {
+        totalLitersInL += stats.totalLiters;
+      }
+    }
     
-    // Calculate weighted average mileage
-    const totalMileageWeighted = allStats.reduce((sum, stats) => {
-      return sum + (stats.averageMileage * stats.totalDistance);
-    }, 0);
-    const averageMileage = totalDistance > 0 ? totalMileageWeighted / totalDistance : 0;
-    
-    const costPerKm = totalDistance > 0 ? totalSpend / totalDistance : 0;
+    const averageMileage = totalLitersInL > 0 ? totalDistanceInKm / totalLitersInL : 0;
+    const costPerKm = totalDistanceInKm > 0 ? totalSpendInInr / totalDistanceInKm : 0;
     
     return {
       totalCars: cars.length,
-      totalSpend,
-      totalLiters,
-      totalDistance,
+      totalSpend: totalSpendInInr,
+      totalLiters: totalLitersInL,
+      totalDistance: totalDistanceInKm,
       averageMileage,
       costPerKm,
-      monthlySpend,
+      monthlySpend: monthlySpendInInr,
     };
   }
 }

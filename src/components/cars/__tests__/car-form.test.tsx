@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CarForm } from '../car-form';
 import { AddCarForm } from '@/types';
 
@@ -30,7 +30,7 @@ describe('CarForm', () => {
 
   it('should submit form with valid data', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <CarForm
         onSubmit={mockOnSubmit}
@@ -54,13 +54,17 @@ describe('CarForm', () => {
         fuel_type: 'petrol',
         year: 2020,
         tank_capacity_l: 40,
+        country: 'IN',
+        currency: 'INR',
+        distance_unit: 'km',
+        volume_unit: 'L',
       });
     });
   });
 
   it('should show validation errors for invalid data', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <CarForm
         onSubmit={mockOnSubmit}
@@ -81,7 +85,7 @@ describe('CarForm', () => {
 
   it('should validate registration number format', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <CarForm
         onSubmit={mockOnSubmit}
@@ -89,7 +93,7 @@ describe('CarForm', () => {
       />
     );
 
-    await user.type(screen.getByLabelText(/registration number/i), 'invalid');
+    await user.type(screen.getByLabelText(/registration number/i), 'inv@lid');
     await user.click(screen.getByRole('button', { name: /add car/i }));
 
     await waitFor(() => {

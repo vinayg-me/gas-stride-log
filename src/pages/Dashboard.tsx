@@ -76,6 +76,24 @@ export default function Dashboard() {
     );
   }
 
+  const overallCurrency = overall?.baseCurrency || 'INR';
+  const overallDistance = overall?.baseDistance || 'km';
+  const overallVolume = overall?.baseVolume || 'L';
+
+  let overallCurrencySymbol = overallCurrency;
+  if (overallCurrency === 'INR') overallCurrencySymbol = '₹';
+  else if (overallCurrency === 'USD') overallCurrencySymbol = '$';
+  else if (overallCurrency === 'EUR') overallCurrencySymbol = '€';
+  else if (overallCurrency === 'GBP') overallCurrencySymbol = '£';
+
+  let overallEfficiencyUnit = `${overallDistance}/${overallVolume}`;
+  if (overallDistance === 'mi' && overallVolume === 'gal') {
+    overallEfficiencyUnit = 'mpg';
+  }
+
+  // Check if user has multiple cars with different currencies
+  const hasMixedCurrencies = cars.length > 1 && new Set(cars.map(c => c.currency || 'INR')).size > 1;
+
   return (
     <div className="min-h-screen bg-gradient-hero">
       {/* Hero Section */}
@@ -160,13 +178,16 @@ export default function Dashboard() {
           variants={containerVariants}
           className="mb-12"
         >
-          <motion.h2
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="text-2xl font-bold text-foreground mb-6"
-          >
-            Overall Performance
-          </motion.h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Overall Performance</h2>
+              {hasMixedCurrencies && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  ⚠️ Footnote: Multi-currency garage. Costs aggregated in {overallCurrency} ({overallCurrencySymbol}) based on static exchange rates.
+                </p>
+              )}
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
@@ -178,20 +199,20 @@ export default function Dashboard() {
             />
             <StatCard
               title="Average Mileage"
-              value={overall ? `${overall.averageMileage.toFixed(1)}` : '—'}
+              value={overall ? `${overall.averageMileage.toFixed(1)} ${overallEfficiencyUnit}` : '—'}
               subtitle="Across all vehicles"
               icon={Fuel}
               trend={overall ? { value: 0, isPositive: true } : undefined}
             />
             <StatCard
-              title="Cost per KM"
-              value={overall ? `₹${overall.costPerKm.toFixed(2)}` : '—'}
+              title={`Cost per ${overallDistance.toUpperCase()}`}
+              value={overall ? `${overallCurrencySymbol}${overall.costPerKm.toFixed(2)}` : '—'}
               subtitle="Running cost"
               icon={DollarSign}
             />
             <StatCard
               title="Monthly Spend"
-              value={overall ? `₹${overall.last30DaysSpend.toFixed(0)}` : '—'}
+              value={overall ? `${overallCurrencySymbol}${overall.last30DaysSpend.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—'}
               subtitle="This month"
               icon={Calendar}
               variant="glass"

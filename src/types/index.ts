@@ -9,6 +9,9 @@ export interface Car {
   fuel_type: 'petrol' | 'diesel' | 'electric' | 'hybrid' | 'cng' | 'lpg';
   tank_capacity_l?: number;
   year?: number;
+  currency?: string;
+  distance_unit?: 'km' | 'mi';
+  volume_unit?: 'L' | 'gal';
   created_at: string;
   updated_at: string;
 }
@@ -79,6 +82,10 @@ export interface AddCarForm {
   fuel_type: 'petrol' | 'diesel' | 'electric' | 'hybrid' | 'cng' | 'lpg';
   tank_capacity_l?: number;
   year?: number;
+  country?: 'IN' | 'US' | 'GB' | 'EU' | 'custom';
+  currency?: string;
+  distance_unit?: 'km' | 'mi';
+  volume_unit?: 'L' | 'gal';
 }
 
 export interface AddFuelLogForm {

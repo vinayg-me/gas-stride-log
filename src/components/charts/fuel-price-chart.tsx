@@ -3,6 +3,8 @@ import { TrendingUp } from 'lucide-react';
 import { useFuelPriceTrends } from '@/hooks/use-analytics';
 import { ChartCard } from './chart-card';
 import { useChartConfig } from '@/hooks/use-chart-config';
+import { useCars } from '@/hooks/use-cars';
+import { getCarUnits } from '@/lib/units';
 
 interface FuelPriceChartProps {
   carId: string;
@@ -14,16 +16,22 @@ interface FuelPriceChartProps {
 export function FuelPriceChart({ carId, months = 12, height = 300, className }: FuelPriceChartProps) {
   const { data: priceData = [], isLoading, error } = useFuelPriceTrends(carId, months);
   const { commonAxisProps, commonTooltipProps, commonGridProps, defaultMargin } = useChartConfig();
+  const { data: cars = [] } = useCars();
+  const car = cars.find(c => c.id === carId);
+  const { currencySymbol, volumeUnit } = getCarUnits(car);
+
+  const isElectric = car?.fuel_type === 'electric';
+  const labelPrefix = isElectric ? 'Charging' : 'Fuel';
 
   return (
     <ChartCard
-      title="Fuel Price Trends"
-      subtitle="Historical fuel price fluctuations"
+      title={`${labelPrefix} Price Trends`}
+      subtitle={`Historical ${labelPrefix.toLowerCase()} price fluctuations`}
       icon={TrendingUp}
       isLoading={isLoading}
       error={error}
       dataLength={priceData.length}
-      emptyMessage="No fuel price data available."
+      emptyMessage={`No ${labelPrefix.toLowerCase()} price data available.`}
       height={height}
       className={className}
     >
@@ -43,13 +51,13 @@ export function FuelPriceChart({ carId, months = 12, height = 300, className }: 
           />
           <YAxis 
             {...commonAxisProps}
-            label={{ value: '₹/L', angle: -90, position: 'insideLeft' }}
+            label={{ value: `${currencySymbol}/${volumeUnit}`, angle: -90, position: 'insideLeft' }}
             domain={['auto', 'auto']}
           />
           <Tooltip
             {...commonTooltipProps}
             formatter={(value: number) => [
-              `₹${value.toFixed(2)} /L`,
+              `${currencySymbol}${value.toFixed(2)} /${volumeUnit}`,
               'Price'
             ]}
           />
@@ -60,7 +68,7 @@ export function FuelPriceChart({ carId, months = 12, height = 300, className }: 
             stroke="hsl(var(--primary))"
             fillOpacity={1}
             fill="url(#colorPrice)"
-            name="Price (₹/L)"
+            name={`Price (${currencySymbol}/${volumeUnit})`}
           />
         </AreaChart>
       </ResponsiveContainer>

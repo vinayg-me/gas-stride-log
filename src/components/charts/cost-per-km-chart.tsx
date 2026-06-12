@@ -1,8 +1,10 @@
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { IndianRupee } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 import { useCostPerKmTrends } from '@/hooks/use-analytics';
 import { ChartCard } from './chart-card';
 import { useChartConfig } from '@/hooks/use-chart-config';
+import { useCars } from '@/hooks/use-cars';
+import { getCarUnits } from '@/lib/units';
 
 interface CostPerKmChartProps {
   carId: string;
@@ -14,16 +16,21 @@ interface CostPerKmChartProps {
 export function CostPerKmChart({ carId, months = 12, height = 300, className }: CostPerKmChartProps) {
   const { data: costData = [], isLoading, error } = useCostPerKmTrends(carId, months);
   const { commonAxisProps, commonTooltipProps, commonGridProps, defaultMargin } = useChartConfig();
+  const { data: cars = [] } = useCars();
+  const car = cars.find(c => c.id === carId);
+  const { currencySymbol, distanceUnit } = getCarUnits(car);
+
+  const distLabel = distanceUnit === 'mi' ? 'Mile' : 'KM';
 
   return (
     <ChartCard
-      title="Cost per KM Trends"
-      subtitle="Running cost efficiency per kilometer"
-      icon={IndianRupee}
+      title={`Cost per ${distLabel} Trends`}
+      subtitle={`Running cost efficiency per ${distanceUnit === 'mi' ? 'mile' : 'kilometer'}`}
+      icon={Wallet}
       isLoading={isLoading}
       error={error}
       dataLength={costData.length}
-      emptyMessage="No enough data to calculate cost per KM. Requires at least 2 consecutive fuel logs."
+      emptyMessage={`Not enough data to calculate cost per ${distLabel}. Requires at least 2 consecutive fuel logs.`}
       height={height}
       className={className}
     >
@@ -37,12 +44,12 @@ export function CostPerKmChart({ carId, months = 12, height = 300, className }: 
           />
           <YAxis 
             {...commonAxisProps}
-            label={{ value: '₹/km', angle: -90, position: 'insideLeft' }}
+            label={{ value: `${currencySymbol}/${distanceUnit}`, angle: -90, position: 'insideLeft' }}
           />
           <Tooltip
             {...commonTooltipProps}
             formatter={(value: number) => [
-              `₹${value.toFixed(2)} /km`,
+              `${currencySymbol}${value.toFixed(2)} /${distanceUnit}`,
               'Cost'
             ]}
           />
@@ -54,7 +61,7 @@ export function CostPerKmChart({ carId, months = 12, height = 300, className }: 
             strokeWidth={2}
             dot={{ fill: 'hsl(var(--destructive))', strokeWidth: 2, r: 4 }}
             activeDot={{ r: 6, stroke: 'hsl(var(--destructive))', strokeWidth: 2 }}
-            name="Cost (₹/km)"
+            name={`Cost (${currencySymbol}/${distanceUnit})`}
           />
         </LineChart>
       </ResponsiveContainer>

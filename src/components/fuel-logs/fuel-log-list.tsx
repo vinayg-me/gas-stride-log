@@ -12,6 +12,7 @@ import { DeleteFuelLogDialog } from './delete-fuel-log-dialog';
 import { useFuelLogs, useCarMileage } from '@/hooks/use-fuel-logs';
 import { cn } from '@/lib/utils';
 import { FuelLogService } from '@/services/fuel-logs';
+import { getCarUnits } from '@/lib/units';
 
 interface FuelLogListProps {
   carId?: string;
@@ -68,11 +69,10 @@ export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
     <div className={cn("space-y-4", className)}>
       {logsWithMileage.map((log, index) => {
         const car = cars.find(c => c.id === log.car_id);
+        const { currencySymbol, distanceUnit, volumeUnit, efficiencyUnit } = getCarUnits(car);
         const isElectric = car?.fuel_type === 'electric';
         const isCng = car?.fuel_type === 'cng';
-        const volumeUnit = isElectric ? 'kWh' : (isCng ? 'kg' : 'L');
-        const efficiencyUnit = isElectric ? 'km/kWh' : (isCng ? 'km/kg' : 'km/L');
-        const unitLabel = isElectric ? 'per kWh' : (isCng ? 'per kg' : 'per liter');
+        const unitLabel = isElectric ? 'per kWh' : (isCng ? 'per kg' : `per ${volumeUnit === 'gal' ? 'gallon' : 'liter'}`);
         
         return (
           <motion.div
@@ -155,13 +155,13 @@ export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
                     <div className="text-lg font-bold text-primary">
                       {log.odometer_km.toLocaleString()}
                     </div>
-                    <div className="text-xs text-muted-foreground">km</div>
+                    <div className="text-xs text-muted-foreground">{distanceUnit}</div>
                   </div>
                   
                   {log.price_per_l && (
                     <div className="text-center p-3 rounded-lg bg-background/50">
                       <div className="text-lg font-bold text-secondary">
-                        ₹{log.price_per_l.toFixed(2)}
+                        {currencySymbol}{log.price_per_l.toFixed(2)}
                       </div>
                       <div className="text-xs text-muted-foreground">{unitLabel}</div>
                     </div>
@@ -170,7 +170,7 @@ export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
                   {log.total_cost && (
                     <div className="text-center p-3 rounded-lg bg-background/50">
                       <div className="text-lg font-bold text-green-500">
-                        ₹{log.total_cost.toFixed(2)}
+                        {currencySymbol}{log.total_cost.toFixed(2)}
                       </div>
                       <div className="text-xs text-muted-foreground">total</div>
                     </div>
@@ -181,7 +181,7 @@ export function FuelLogList({ carId, cars = [], className }: FuelLogListProps) {
                       <div className="text-lg font-bold text-orange-500">
                         {log.distance}
                       </div>
-                      <div className="text-xs text-muted-foreground">km driven</div>
+                      <div className="text-xs text-muted-foreground">{distanceUnit} driven</div>
                     </div>
                   )}
                 </div>

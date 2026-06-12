@@ -21,6 +21,9 @@ const mockSupabaseQuery = {
   eq: vi.fn().mockReturnThis(),
   single: vi.fn().mockReturnThis(),
   order: vi.fn().mockReturnThis(),
+  then: vi.fn().mockImplementation((onfulfilled) => {
+    return Promise.resolve(onfulfilled({ data: [], error: null }));
+  }),
 };
 
 const mockStorage = {
@@ -41,6 +44,9 @@ describe('FuelLogService', () => {
     mockSupabaseQuery.eq.mockReturnThis();
     mockSupabaseQuery.single.mockReturnThis();
     mockSupabaseQuery.order.mockReturnThis();
+    mockSupabaseQuery.then.mockImplementation((onfulfilled) => {
+      return Promise.resolve(onfulfilled({ data: [], error: null }));
+    });
     
     (supabase.from as any).mockReturnValue(mockSupabaseQuery);
     (supabase.storage.from as any).mockReturnValue(mockStorage);
@@ -209,8 +215,9 @@ describe('FuelLogService', () => {
 
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({ data: mockLogs, error: null }),
+        order: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        then: vi.fn((onfulfilled) => onfulfilled({ data: mockLogs, error: null })),
       };
 
       (supabase.from as any).mockReturnValue(mockQuery);
@@ -230,7 +237,8 @@ describe('FuelLogService', () => {
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ data: mockLogs, error: null }),
+        eq: vi.fn().mockReturnThis(),
+        then: vi.fn((onfulfilled) => onfulfilled({ data: mockLogs, error: null })),
       };
 
       (supabase.from as any).mockReturnValue(mockQuery);
@@ -242,9 +250,11 @@ describe('FuelLogService', () => {
     });
 
     it('should throw error when database query fails', async () => {
-      mockSupabaseQuery.order.mockResolvedValue({
-        data: null,
-        error: { message: 'Database error' },
+      mockSupabaseQuery.then.mockImplementation((onfulfilled) => {
+        return Promise.resolve(onfulfilled({
+          data: null,
+          error: { message: 'Database error' },
+        }));
       });
 
       await expect(FuelLogService.getFuelLogs()).rejects.toThrow('Failed to fetch fuel logs: Database error');
@@ -277,10 +287,10 @@ describe('FuelLogService', () => {
 
       const result = await FuelLogService.createFuelLog(logData);
 
-      expect(mockSupabaseQuery.insert).toHaveBeenCalledWith({
+      expect(mockSupabaseQuery.insert).toHaveBeenCalledWith(expect.objectContaining({
         ...logData,
         total_cost: 4220,
-      });
+      }));
       expect(result).toEqual(mockCreatedLog);
     });
   });

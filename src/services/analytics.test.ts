@@ -1,6 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AnalyticsService } from './analytics';
-import { FuelLogService } from './fuel-logs';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('./fuel-logs', () => ({
   FuelLogService: {
@@ -10,27 +8,47 @@ vi.mock('./fuel-logs', () => ({
   },
 }));
 
+vi.mock('./cars', () => ({
+  CarService: {
+    getCarById: vi.fn(),
+    getCars: vi.fn(),
+  },
+}));
+
+import { AnalyticsService } from './analytics';
+import { FuelLogService } from './fuel-logs';
+import { CarService } from './cars';
+
 describe('AnalyticsService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2024-03-01'));
+
+    vi.mocked(CarService.getCarById).mockResolvedValue({
+      id: 'car-1',
+      owner_id: 'user-1',
+      currency: 'INR',
+      distance_unit: 'km',
+      volume_unit: 'L',
+      fuel_type: 'petrol',
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z',
+      registration: 'KA-01-AB-1234',
+      make: 'Honda',
+      model: 'City',
+    });
+    vi.mocked(CarService.getCars).mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('getMileageTrends', () => {
     it('should return mileage trend data correctly', async () => {
       const mockMileageData = {
         logs: [
-          {
-            id: '1',
-            car_id: 'car-1',
-            filled_at: '2024-01-15',
-            odometer_km: 1500,
-            liters: 35,
-            mileage: 14.29,
-            distance: 500,
-            is_partial: false,
-            created_at: '2024-01-15T00:00:00Z',
-            updated_at: '2024-01-15T00:00:00Z',
-          },
           {
             id: '2',
             car_id: 'car-1',
@@ -43,11 +61,23 @@ describe('AnalyticsService', () => {
             created_at: '2024-02-01T00:00:00Z',
             updated_at: '2024-02-01T00:00:00Z',
           },
+          {
+            id: '1',
+            car_id: 'car-1',
+            filled_at: '2024-01-15',
+            odometer_km: 1500,
+            liters: 35,
+            mileage: 14.29,
+            distance: 500,
+            is_partial: false,
+            created_at: '2024-01-15T00:00:00Z',
+            updated_at: '2024-01-15T00:00:00Z',
+          },
         ],
         averageMileage: 15.48,
       };
 
-      (FuelLogService.calculateMileageForCar as any).mockResolvedValue(mockMileageData);
+      vi.mocked(FuelLogService.calculateMileageForCar).mockResolvedValue(mockMileageData);
 
       const result = await AnalyticsService.getMileageTrends('car-1', 12);
 
@@ -107,7 +137,7 @@ describe('AnalyticsService', () => {
         },
       ];
 
-      (FuelLogService.getFuelLogs as any).mockResolvedValue(mockLogs);
+      vi.mocked(FuelLogService.getFuelLogs).mockResolvedValue(mockLogs);
 
       const result = await AnalyticsService.getSpendingTrends('car-1', 12);
 

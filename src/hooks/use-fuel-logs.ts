@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FuelLogService } from '@/services/fuel-logs';
-import { FuelLog, AddFuelLogForm } from '@/types';
+import { CarService } from '@/services/cars';
+import { FuelLog, AddFuelLogForm, Car } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { getCarUnits, convertCurrency, convertDistance, convertVolume } from '@/lib/units';
 
 export const FUEL_LOG_QUERY_KEYS = {
   all: ['fuel-logs'] as const,
@@ -56,16 +58,52 @@ export function useOverallStatistics(carIds: string[]) {
     enabled: carIds.length > 0,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const perCar = await Promise.all(carIds.map((id) => FuelLogService.getCarStatistics(id)));
+      const [cars, perCar] = await Promise.all([
+        CarService.getCars(),
+        Promise.all(carIds.map((id) => FuelLogService.getCarStatistics(id)))
+      ]);
 
-      const totalSpend = perCar.reduce((s, x) => s + x.totalSpend, 0);
-      const totalLiters = perCar.reduce((s, x) => s + x.totalLiters, 0);
-      const totalDistance = perCar.reduce((s, x) => s + x.totalDistance, 0);
+      const baseCar = cars.find((c) => carIds.includes(c.id));
+      const { currency: baseCurrency, distanceUnit: baseDistance, volumeUnit: baseVolume } = getCarUnits(baseCar);
+
+      let totalSpend = 0;
+      let totalLiters = 0;
+      let totalDistance = 0;
+      let last30DaysSpend = 0;
+
+      for (let i = 0; i < carIds.length; i++) {
+        const carId = carIds[i];
+        const car = cars.find((c) => c.id === carId);
+        const stats = perCar[i];
+        if (!stats) continue;
+
+        const { currency, distanceUnit, volumeUnit } = getCarUnits(car);
+
+        totalSpend += convertCurrency(stats.totalSpend, currency, baseCurrency);
+        last30DaysSpend += convertCurrency(stats.last30DaysSpend, currency, baseCurrency);
+        totalDistance += convertDistance(stats.totalDistance, distanceUnit, baseDistance);
+
+        if (volumeUnit === 'gal' || volumeUnit === 'L') {
+          totalLiters += convertVolume(stats.totalLiters, volumeUnit, baseVolume);
+        } else {
+          totalLiters += stats.totalLiters;
+        }
+      }
+
       const averageMileage = totalLiters > 0 ? totalDistance / totalLiters : 0;
       const costPerKm = totalDistance > 0 ? totalSpend / totalDistance : 0;
-      const last30DaysSpend = perCar.reduce((s, x) => s + x.last30DaysSpend, 0);
 
-      return { totalSpend, totalLiters, totalDistance, averageMileage, costPerKm, last30DaysSpend };
+      return {
+        totalSpend,
+        totalLiters,
+        totalDistance,
+        averageMileage,
+        costPerKm,
+        last30DaysSpend,
+        baseCurrency,
+        baseDistance,
+        baseVolume,
+      };
     },
   });
 }

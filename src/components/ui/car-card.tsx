@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { Car as CarType, CarStats } from "@/types";
 import { useCarStatistics } from "@/hooks/use-fuel-logs";
 import { AddFuelLogDialog } from "@/components/fuel-logs/fuel-log-dialog";
+import { getCarUnits } from "@/lib/units";
 
 interface CarCardProps {
   car?: CarType;
@@ -97,6 +98,7 @@ export const CarCard = React.forwardRef<HTMLDivElement, CarCardProps>(
 
     // compute stats from live fuel logs if available
     const { data: carStats } = useCarStatistics(car.id);
+    const { currencySymbol, distanceUnit, volumeUnit, efficiencyUnit } = getCarUnits(car);
 
     return (
       <motion.div
@@ -170,7 +172,7 @@ export const CarCard = React.forwardRef<HTMLDivElement, CarCardProps>(
                   <div className="flex items-center gap-1">
                     <Fuel className="w-3 h-3 text-primary" />
                     <span className="text-xs text-muted-foreground">
-                      Avg km/L
+                      Avg {efficiencyUnit}
                     </span>
                   </div>
                   <p className="text-lg font-bold text-foreground">
@@ -180,7 +182,7 @@ export const CarCard = React.forwardRef<HTMLDivElement, CarCardProps>(
                 <div className="space-y-1">
                   <div className="flex items-center gap-1">
                     <TrendingUp className="w-3 h-3 text-accent" />
-                    <span className="text-xs text-muted-foreground">₹/km</span>
+                    <span className="text-xs text-muted-foreground">{currencySymbol}/{distanceUnit}</span>
                   </div>
                   <p className="text-lg font-bold text-foreground">
                     {(stats?.cost_per_km ?? carStats?.costPerKm ?? 0).toFixed(2)}
@@ -234,7 +236,7 @@ export const CarCard = React.forwardRef<HTMLDivElement, CarCardProps>(
                   {new Date(stats.last_fill_date).toLocaleDateString()}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  30-day spend: ₹{stats.last_30_days_spend.toFixed(0)}
+                  30-day spend: {currencySymbol}{stats.last_30_days_spend.toFixed(0)}
                 </p>
               </div>
             )}
