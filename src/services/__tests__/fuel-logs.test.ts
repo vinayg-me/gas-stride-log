@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FuelLogService } from '../fuel-logs';
 import { supabase } from '@/integrations/supabase/client';
 import { AddFuelLogForm } from '@/types';
+import { db } from '@/lib/db';
 
 // Mock Supabase
 vi.mock('@/integrations/supabase/client', () => ({
@@ -33,7 +34,7 @@ const mockStorage = {
 };
 
 describe('FuelLogService', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     
     // Reset all mock functions to return `this` for chaining
@@ -50,6 +51,9 @@ describe('FuelLogService', () => {
     
     (supabase.from as any).mockReturnValue(mockSupabaseQuery);
     (supabase.storage.from as any).mockReturnValue(mockStorage);
+
+    await db.fuelLogs.clear();
+    await db.syncQueue.clear();
   });
 
   describe('processLogData', () => {
@@ -249,7 +253,7 @@ describe('FuelLogService', () => {
       expect(result).toEqual(mockLogs);
     });
 
-    it('should throw error when database query fails', async () => {
+    it('should fall back to local storage when database query fails', async () => {
       mockSupabaseQuery.then.mockImplementation((onfulfilled) => {
         return Promise.resolve(onfulfilled({
           data: null,
@@ -257,7 +261,8 @@ describe('FuelLogService', () => {
         }));
       });
 
-      await expect(FuelLogService.getFuelLogs()).rejects.toThrow('Failed to fetch fuel logs: Database error');
+      const result = await FuelLogService.getFuelLogs();
+      expect(Array.isArray(result)).toBe(true);
     });
   });
 
@@ -278,6 +283,7 @@ describe('FuelLogService', () => {
         total_cost: 4220, // Auto-calculated
         created_at: '2024-01-01T10:00:00Z',
         updated_at: '2024-01-01T10:00:00Z',
+        synced: 1,
       };
 
       mockSupabaseQuery.single.mockResolvedValue({
@@ -292,6 +298,41 @@ describe('FuelLogService', () => {
         total_cost: 4220,
       }));
       expect(result).toEqual(mockCreatedLog);
+    });
+
+    it('should save to local database and queue synchronization when offline', async () => {
+      // Mock offline state
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+
+      const logData: AddFuelLogForm = {
+        car_id: 'car-1',
+        filled_at: '2024-01-01',
+        odometer_km: 1000,
+        liters: 40,
+        price_per_l: 105.50,
+        is_partial: false,
+      };
+
+      const result = await FuelLogService.createFuelLog(logData);
+
+      // Verify Supabase insert was not called
+      expect(mockSupabaseQuery.insert).not.toHaveBeenCalled();
+
+      // Verify stored in Dexie locally
+      const localLogs = await db.fuelLogs.toArray();
+      expect(localLogs).toHaveLength(1);
+      expect(localLogs[0].synced).toBe(0);
+      expect(localLogs[0].liters).toBe(40);
+
+      // Verify syncQueue has the transaction item
+      const queue = await db.syncQueue.toArray();
+      expect(queue).toHaveLength(1);
+      expect(queue[0].table).toBe('fuel_logs');
+      expect(queue[0].action).toBe('insert');
+      expect(queue[0].recordId).toBe(result.id);
+
+      // Restore navigator online state
+      vi.spyOn(navigator, 'onLine', 'get').mockRestore();
     });
   });
 
