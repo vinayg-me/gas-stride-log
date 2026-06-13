@@ -5,13 +5,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/auth-context";
-import { ProtectedRoute } from "@/components/auth/protected-route";
+import { ProtectedRoute, GuestRoute } from "@/components/auth/protected-route";
 import { AppLayout } from "@/components/layout/app-layout";
 import { useAppStore } from "@/store";
 import { SyncManager } from "@/services/sync";
+import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
 import Analytics from "@/pages/Analytics";
 import AuthCallback from "@/pages/AuthCallback";
+import { AuthForm } from "@/components/auth/auth-form";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -60,18 +62,28 @@ const AppContent = () => {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="*" element={
+          <Route path="/login" element={
+            <GuestRoute>
+              <AuthForm />
+            </GuestRoute>
+          } />
+          <Route path="/dashboard" element={
             <ProtectedRoute>
               <AppLayout>
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/analytics" element={<Analytics />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <Dashboard />
               </AppLayout>
             </ProtectedRoute>
           } />
+          <Route path="/analytics" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Analytics />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
