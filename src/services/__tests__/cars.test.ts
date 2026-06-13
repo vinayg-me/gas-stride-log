@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CarService } from '../cars';
 import { supabase } from '@/integrations/supabase/client';
 import { AddCarForm } from '@/types';
+import { db } from '@/lib/db';
 
 // Mock Supabase
 vi.mock('@/integrations/supabase/client', () => ({
@@ -24,9 +25,11 @@ const mockSupabaseQuery = {
 };
 
 describe('CarService', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     (supabase.from as any).mockReturnValue(mockSupabaseQuery);
+    await db.cars.clear();
+    await db.syncQueue.clear();
   });
 
   describe('getCars', () => {
@@ -48,14 +51,16 @@ describe('CarService', () => {
       expect(result).toEqual(mockCars);
     });
 
-    it('should throw error when fetch fails', async () => {
+    it('should fall back to local storage when fetch fails', async () => {
       const mockError = { message: 'Database error' };
       mockSupabaseQuery.order.mockResolvedValue({
         data: null,
         error: mockError,
       });
 
-      await expect(CarService.getCars()).rejects.toThrow('Failed to fetch cars: Database error');
+      const result = await CarService.getCars();
+      expect(supabase.from).toHaveBeenCalledWith('cars');
+      expect(Array.isArray(result)).toBe(true);
     });
   });
 
@@ -68,7 +73,16 @@ describe('CarService', () => {
         model: 'City',
         fuel_type: 'petrol',
       };
-      const mockCreatedCar = { id: 'car-1', ...carData, owner_id: 'user-1' };
+      const mockCreatedCar = {
+        id: 'car-1',
+        ...carData,
+        owner_id: 'user-1',
+        country: 'IN',
+        currency: 'INR',
+        distance_unit: 'km',
+        volume_unit: 'L',
+        synced: 1
+      };
 
       (supabase.auth.getUser as any).mockResolvedValue({
         data: { user: mockUser },
@@ -83,10 +97,13 @@ describe('CarService', () => {
 
       expect(supabase.auth.getUser).toHaveBeenCalled();
       expect(supabase.from).toHaveBeenCalledWith('cars');
-      expect(mockSupabaseQuery.insert).toHaveBeenCalledWith({
-        ...carData,
+      expect(mockSupabaseQuery.insert).toHaveBeenCalledWith(expect.objectContaining({
+        make: 'Honda',
+        model: 'City',
+        registration: 'KA-01-AB-1234',
+        fuel_type: 'petrol',
         owner_id: 'user-1',
-      });
+      }));
       expect(result).toEqual(mockCreatedCar);
     });
 
@@ -128,6 +145,44 @@ describe('CarService', () => {
       await expect(CarService.createCar(carData)).rejects.toThrow(
         'A car with this registration number already exists'
       );
+    });
+
+    it('should save to local database and queue synchronization when offline', async () => {
+      // Mock offline state
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+
+      const mockUser = { id: 'user-1' };
+      const carData: AddCarForm = {
+        registration: 'KA-01-AB-1234',
+        make: 'Honda',
+        model: 'City',
+        fuel_type: 'petrol',
+      };
+
+      (supabase.auth.getUser as any).mockResolvedValue({
+        data: { user: mockUser },
+      });
+
+      const result = await CarService.createCar(carData);
+
+      // Verify Supabase insert was not called
+      expect(mockSupabaseQuery.insert).not.toHaveBeenCalled();
+
+      // Verify stored in Dexie locally
+      const localCars = await db.cars.toArray();
+      expect(localCars).toHaveLength(1);
+      expect(localCars[0].synced).toBe(0);
+      expect(localCars[0].registration).toBe('KA-01-AB-1234');
+
+      // Verify syncQueue has the transaction item
+      const queue = await db.syncQueue.toArray();
+      expect(queue).toHaveLength(1);
+      expect(queue[0].table).toBe('cars');
+      expect(queue[0].action).toBe('insert');
+      expect(queue[0].recordId).toBe(result.id);
+
+      // Restore navigator online state
+      vi.spyOn(navigator, 'onLine', 'get').mockRestore();
     });
   });
 });
