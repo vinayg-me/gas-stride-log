@@ -53,7 +53,7 @@ export function Navbar({ className }: NavbarProps) {
   };
 
   const navigateToHome = () => {
-    navigate('/');
+    navigate(user ? '/dashboard' : '/');
   };
 
   

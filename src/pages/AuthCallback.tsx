@@ -13,18 +13,18 @@ export default function AuthCallback() {
         
         if (error) {
           console.error('Auth callback error:', error);
-          navigate('/auth?error=' + encodeURIComponent(error.message));
+          navigate('/login?error=' + encodeURIComponent(error.message));
           return;
         }
 
         if (data.session) {
-          navigate('/');
+          navigate('/dashboard');
         } else {
-          navigate('/auth');
+          navigate('/login');
         }
       } catch (error) {
         console.error('Unexpected error in auth callback:', error);
-        navigate('/auth');
+        navigate('/login');
       }
     };
 
