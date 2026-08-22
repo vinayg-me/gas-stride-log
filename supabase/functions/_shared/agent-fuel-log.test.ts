@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   calculateFuelLogCosts,
+  canonicalizeAgentFuelLogRequest,
   hasServiceRoleClaim,
+  isUuid,
   isValidIsoDate,
   resolveVehicleByMention,
+  sha256Hex,
   type AgentVehicle,
 } from './agent-fuel-log';
 
@@ -89,6 +92,43 @@ describe('calculateFuelLogCosts', () => {
   it('rejects mismatched totals rather than silently overwriting the caller value', () => {
     expect(() => calculateFuelLogCosts({ liters: 40, pricePerL: 105.5, totalCost: 4000 })).toThrow(
       'Total cost does not match litres × price per litre',
+    );
+  });
+});
+
+describe('agent fuel-log idempotency helpers', () => {
+  const request = {
+    carId: '580ce705-ea1f-4a2c-9b2c-cc45e7547863',
+    filledAt: '2026-08-15',
+    odometerKm: 17398,
+    liters: 43.14,
+    pricePerL: 137.98,
+    totalCost: 5952.46,
+    isPartial: false,
+    station: '  Shell Power  ',
+    notes: '   ',
+  };
+
+  it('accepts UUID idempotency keys and rejects malformed keys', () => {
+    expect(isUuid('8a2cda77-aeaa-4aa9-b40a-8b3276e8bc85')).toBe(true);
+    expect(isUuid('repeat-me')).toBe(false);
+    expect(isUuid(undefined)).toBe(false);
+  });
+
+  it('canonicalizes persisted request values and normalizes optional text', () => {
+    expect(canonicalizeAgentFuelLogRequest(request)).toBe(
+      '{"car_id":"580ce705-ea1f-4a2c-9b2c-cc45e7547863","filled_at":"2026-08-15","odometer_km":17398,"liters":43.14,"price_per_l":137.98,"total_cost":5952.46,"is_partial":false,"station":"Shell Power","notes":null}',
+    );
+  });
+
+  it('produces a stable SHA-256 fingerprint for the canonical request', async () => {
+    const canonical = canonicalizeAgentFuelLogRequest(request);
+    await expect(sha256Hex(canonical)).resolves.toBe('522b4a8382b27eda70f8cbb0e65ae1e005ef966ce7bf017ba6f52b796293797f');
+  });
+
+  it('changes the fingerprint input when a persisted value changes', () => {
+    expect(canonicalizeAgentFuelLogRequest({ ...request, liters: 43.15 })).not.toBe(
+      canonicalizeAgentFuelLogRequest(request),
     );
   });
 });

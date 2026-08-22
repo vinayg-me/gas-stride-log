@@ -10,6 +10,45 @@ export type VehicleResolution =
   | { status: 'ambiguous'; cars: AgentVehicle[] }
   | { status: 'not_found' };
 
+export interface CanonicalAgentFuelLogRequestInput {
+  carId: string;
+  filledAt: string;
+  odometerKm: number;
+  liters: number;
+  pricePerL: number;
+  totalCost: number;
+  isPartial: boolean;
+  station: string | null | undefined;
+  notes: string | null | undefined;
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isUuid(value: unknown): value is string {
+  return typeof value === 'string' && UUID_PATTERN.test(value);
+}
+
+const normalizedOptionalText = (value: string | null | undefined) => value?.trim() || null;
+
+export function canonicalizeAgentFuelLogRequest(input: CanonicalAgentFuelLogRequestInput): string {
+  return JSON.stringify({
+    car_id: input.carId,
+    filled_at: input.filledAt,
+    odometer_km: input.odometerKm,
+    liters: input.liters,
+    price_per_l: input.pricePerL,
+    total_cost: input.totalCost,
+    is_partial: input.isPartial,
+    station: normalizedOptionalText(input.station),
+    notes: normalizedOptionalText(input.notes),
+  });
+}
+
+export async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
 const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
 const words = (value: string) => value.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
 

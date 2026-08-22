@@ -27,6 +27,7 @@ Invoke the function through the approved Composio Supabase connection using `aut
 ```json
 {
   "confirmed": true,
+  "idempotency_key": "8a2cda77-aeaa-4aa9-b40a-8b3276e8bc85",
   "vehicle": "Hycross",
   "filled_at": "2026-08-22",
   "odometer_km": 17398,
@@ -37,6 +38,14 @@ Invoke the function through the approved Composio Supabase connection using `aut
 }
 ```
 
+Generate a UUID `idempotency_key` once when a pending entry is created, then preserve it for the final confirmed invocation and any transport retry. Do not reuse a key for another fuel entry.
+
 Send either `price_per_l` or `total_cost`; when both are provided, the function rejects inconsistent values rather than correcting them silently.
 
-A successful response returns the saved fuel log and matched vehicle. `404` means no vehicle matched, and `409` means the mention matched more than one vehicle.
+## Idempotency and audit behavior
+
+- A first accepted request returns `201` with `replayed: false`.
+- A retry with the same key and exactly the same persisted fuel values returns the original entry with `200` and `replayed: true`; it does not create a second log.
+- Reusing a key with a changed canonical fuel payload returns `409` and makes no mutation.
+- Agent-created logs record `source: "agent"`. A private, service-role-only audit ledger stores the UUID request ID, server-side confirmation time, and SHA-256 canonical-payload fingerprint. The fingerprint is never exposed through the public view or endpoint response.
+- `404` means no vehicle matched. A vehicle ambiguity or idempotency-payload conflict returns `409`.
