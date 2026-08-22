@@ -1,9 +1,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.76.1';
 import {
   calculateFuelLogCosts,
+  canonicalizeAgentFuelLogRequest,
   hasServiceRoleClaim,
+  isUuid,
   isValidIsoDate,
   resolveVehicleByMention,
+  sha256Hex,
   type AgentVehicle,
 } from '../_shared/agent-fuel-log.ts';
 
@@ -15,6 +18,10 @@ const json = (body: Record<string, unknown>, status = 200) =>
 
 const isString = (value: unknown, maxLength: number): value is string =>
   typeof value === 'string' && value.trim().length > 0 && value.trim().length <= maxLength;
+
+interface AgentFuelLogResult extends Record<string, unknown> {
+  replayed: boolean;
+}
 
 Deno.serve(async (request) => {
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -48,9 +55,13 @@ Deno.serve(async (request) => {
   const station = payload.station;
   const notes = payload.notes;
   const isPartial = payload.is_partial ?? false;
+  const idempotencyKey = payload.idempotency_key;
 
   if (payload.confirmed !== true) {
     return json({ error: 'A confirmed request is required before saving a final fuel log' }, 400);
+  }
+  if (!isUuid(idempotencyKey)) {
+    return json({ error: 'idempotency_key must be a UUID' }, 400);
   }
   if (!isString(vehicle, 100) || !isString(filledAt, 10) || !isValidIsoDate(filledAt)) {
     return json({ error: 'vehicle and a valid filled_at date (YYYY-MM-DD) are required' }, 400);
@@ -102,26 +113,50 @@ Deno.serve(async (request) => {
     }, 409);
   }
 
-  const { data: fuelLog, error: insertError } = await supabase
-    .from('fuel_logs')
-    .insert({
-      car_id: resolution.car.id,
-      filled_at: filledAt,
-      odometer_km: odometerKm,
-      liters,
-      price_per_l: costs.pricePerL,
-      total_cost: costs.totalCost,
-      is_partial: isPartial,
-      station: typeof station === 'string' ? station.trim() || null : null,
-      notes: typeof notes === 'string' ? notes.trim() || null : null,
+  const canonicalRequest = canonicalizeAgentFuelLogRequest({
+    carId: resolution.car.id,
+    filledAt,
+    odometerKm: odometerKm as number,
+    liters: liters as number,
+    pricePerL: costs.pricePerL,
+    totalCost: costs.totalCost,
+    isPartial,
+    station: typeof station === 'string' ? station : null,
+    notes: typeof notes === 'string' ? notes : null,
+  });
+  const payloadHash = await sha256Hex(canonicalRequest);
+
+  const { data: fuelLog, error: saveError } = await supabase
+    .rpc('create_agent_fuel_log', {
+      p_owner_id: ownerId,
+      p_idempotency_key: idempotencyKey,
+      p_payload_hash: payloadHash,
+      p_car_id: resolution.car.id,
+      p_filled_at: filledAt,
+      p_odometer_km: odometerKm,
+      p_liters: liters,
+      p_price_per_l: costs.pricePerL,
+      p_total_cost: costs.totalCost,
+      p_is_partial: isPartial,
+      p_station: typeof station === 'string' ? station.trim() || null : null,
+      p_notes: typeof notes === 'string' ? notes.trim() || null : null,
     })
-    .select('id, car_id, filled_at, odometer_km, liters, price_per_l, total_cost, is_partial, station, notes')
     .single();
 
-  if (insertError) {
-    console.error('Unable to save agent fuel log', insertError);
+  if (saveError) {
+    if (saveError.code === 'P0001') {
+      return json({ error: 'idempotency_key was already used with a different fuel-log payload' }, 409);
+    }
+    if (saveError.code === 'P0002') {
+      return json({ error: `No vehicle matches "${vehicle.trim()}"` }, 404);
+    }
+    console.error('Unable to save agent fuel log', saveError);
     return json({ error: 'Unable to save fuel log' }, 500);
   }
 
-  return json({ fuel_log: fuelLog, vehicle: resolution.car });
+  const savedFuelLog = fuelLog as AgentFuelLogResult;
+  return json(
+    { fuel_log: savedFuelLog, vehicle: resolution.car, replayed: savedFuelLog.replayed },
+    savedFuelLog.replayed ? 200 : 201,
+  );
 });
