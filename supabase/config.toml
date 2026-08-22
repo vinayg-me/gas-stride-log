@@ -1,1 +1,4 @@
 project_id = "bkfzqrzshlmjxwgdnkak"
+
+[functions.agent-fuel-log]
+verify_jwt = true
